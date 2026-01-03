@@ -91,7 +91,7 @@ function App() {
         <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <h1 className="text-xl font-semibold text-gray-900">
-              근무표 타당성 검사기
+              Shift Schedule - 교대 근무 검증하기
             </h1>
             <nav aria-label="주요 기능">
               <div className="flex gap-2">

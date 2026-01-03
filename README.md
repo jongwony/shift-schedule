@@ -1,6 +1,6 @@
-# Nurse Shift Scheduling Feasibility Checker
+# Shift Scheduling Feasibility Checker
 
-간호사 근무표의 제약 조건 충족 여부를 실시간으로 검사하는 도구입니다.
+교대 근무표의 제약 조건 충족 여부를 실시간으로 검사하는 도구입니다.
 
 ## 기능
 
