@@ -101,8 +101,9 @@ export function ScheduleGrid({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-      <table className="border-collapse min-w-full" role="grid" aria-label="근무표">
+    <div className="relative">
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+        <table className="border-collapse min-w-full" role="grid" aria-label="근무표">
         <thead className="sticky top-0 z-10">
           <tr>
             <th
@@ -175,11 +176,14 @@ export function ScheduleGrid({
           ))}
         </tbody>
       </table>
-      {!hasAssignments && (
-        <div className="p-4 text-center text-sm text-gray-500 bg-gray-50 border-t border-gray-200">
-          각 셀을 클릭하여 근무를 배정하세요 (D: 데이, E: 이브닝, N: 나이트, OFF: 휴무)
-        </div>
-      )}
+        {!hasAssignments && (
+          <div className="p-4 text-center text-sm text-gray-500 bg-gray-50 border-t border-gray-200">
+            각 셀을 클릭하여 근무를 배정하세요 (D: 데이, E: 이브닝, N: 나이트, OFF: 휴무)
+          </div>
+        )}
+      </div>
+      {/* Scroll indicator - only on mobile */}
+      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none sm:hidden" />
     </div>
   );
 }

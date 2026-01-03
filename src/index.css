@@ -62,9 +62,6 @@
   * {
     @apply border-border;
   }
-  html {
-    min-width: 1024px;
-  }
   body {
     @apply bg-gray-50 text-foreground;
   }

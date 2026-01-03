@@ -89,8 +89,8 @@ function App() {
 
         {/* Header */}
         <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
-          <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">
+          <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
               Shift Schedule - 교대 근무 검증하기
             </h1>
             <nav aria-label="주요 기능">
@@ -106,7 +106,7 @@ function App() {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
-                      {generationStatus === 'loading' ? '생성 중...' : '자동 생성'}
+                      <span className="hidden sm:inline">{generationStatus === 'loading' ? '생성 중...' : '자동 생성'}</span>
                     </span>
                   </button>
                 )}
@@ -119,7 +119,7 @@ function App() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
-                    내보내기
+                    <span className="hidden sm:inline">내보내기</span>
                   </span>
                 </button>
                 <button
@@ -131,7 +131,7 @@ function App() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    불러오기
+                    <span className="hidden sm:inline">불러오기</span>
                   </span>
                 </button>
               </div>

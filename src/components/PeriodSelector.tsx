@@ -30,7 +30,7 @@ export function PeriodSelector({ startDate, onStartDateChange }: PeriodSelectorP
         <CardTitle className="text-lg">근무 기간</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex items-end gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
           <div className="flex-1">
             <Label htmlFor="start-date">시작일</Label>
             <Input

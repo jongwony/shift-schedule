@@ -55,7 +55,7 @@ export function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
           <CardTitle className="text-lg">근무 시간 설정</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="weekly-work-hours">주간 근무시간</Label>
               <Input
@@ -108,7 +108,7 @@ export function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
           <CardTitle className="text-lg">평일 최소인원</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="weekday-day">데이 (D)</Label>
               <Input
@@ -178,7 +178,7 @@ export function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
           <CardTitle className="text-lg">주말 최소인원</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="weekend-day">데이 (D)</Label>
               <Input

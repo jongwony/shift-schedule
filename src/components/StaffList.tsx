@@ -79,7 +79,7 @@ export function StaffList({
           <CardTitle className="text-lg">직원 추가</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4 items-end">
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-end">
             <div className="flex-1">
               <Label htmlFor="staff-name">이름</Label>
               <Input
@@ -132,15 +132,15 @@ export function StaffList({
               {staff.map((s) => (
                 <li
                   key={s.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-gray-50 rounded-lg"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
                     <span className="font-medium">{s.name}</span>
                     <span className="text-sm text-gray-500">
                       주휴: {DAY_NAMES[s.juhuDay]}요일
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
                     <select
                       value={s.juhuDay}
                       onChange={(e) =>
