@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Staff, DayOfWeek } from '@/types';
+import { DAY_NAMES } from '@/utils/dayUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,16 +13,6 @@ interface StaffListProps {
   onRemoveStaff: (id: string) => void;
   onUpdateStaff: (id: string, updates: Partial<Pick<Staff, 'name' | 'juhuDay'>>) => void;
 }
-
-const DAY_NAMES: Record<DayOfWeek, string> = {
-  0: '\uC77C',
-  1: '\uC6D4',
-  2: '\uD654',
-  3: '\uC218',
-  4: '\uBAA9',
-  5: '\uAE08',
-  6: '\uD1A0',
-};
 
 export function StaffList({
   staff,

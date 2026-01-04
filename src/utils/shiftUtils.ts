@@ -48,3 +48,29 @@ export function countShiftsByType(
 
   return counts;
 }
+
+/**
+ * Count staff members by shift type for each date.
+ * Returns a Map where key is date string and value is a record of shift type counts.
+ */
+export function countStaffByShiftPerDate(
+  assignments: ShiftAssignment[],
+  dates: string[]
+): Map<string, Record<ShiftType, number>> {
+  const result = new Map<string, Record<ShiftType, number>>();
+
+  // Initialize all dates with zero counts
+  for (const date of dates) {
+    result.set(date, { D: 0, E: 0, N: 0, OFF: 0 });
+  }
+
+  // Count assignments per date
+  for (const assignment of assignments) {
+    const counts = result.get(assignment.date);
+    if (counts) {
+      counts[assignment.shift]++;
+    }
+  }
+
+  return result;
+}
