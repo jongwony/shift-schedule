@@ -111,7 +111,9 @@ Frontend uses JavaScript `getDay()` (0=Sunday), Backend uses Python `weekday()` 
 
 **Date** (`src/utils/dateUtils.ts`): `formatDateKorean()`, `getWeekBoundaries()`, `forEachDateInRange()`, `isWeekend()`
 
-**Shift** (`src/utils/shiftUtils.ts`): `calculateScheduleCompleteness()`, `getShiftSequence()`, `countShiftsByType()`
+**Day** (`src/utils/dayUtils.ts`): `DAY_NAMES` - Korean day-of-week names (일/월/화/수/목/금/토) keyed by DayOfWeek (0=Sunday)
+
+**Shift** (`src/utils/shiftUtils.ts`): `calculateScheduleCompleteness()`, `getShiftSequence()`, `countShiftsByType()`, `countStaffByShiftPerDate()`
 
 **Impact** (`src/utils/impactCalculator.ts`): Cascading visualization rules:
 - `staffing`: All other staff on same date
