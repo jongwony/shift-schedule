@@ -50,7 +50,7 @@ App.tsx
 | `consecutiveNight` | Hard | Max consecutive night shifts |
 | `nightOffDay` | Hard | N-OFF-D pattern forbidden |
 | `weeklyOff` | Hard | Min OFF days per week (based on weeklyWorkHours) |
-| `juhu` | Hard | Weekly off-day must match staff's juhuDay |
+| `juhu` | Hard | Weekly off-day must match staff's juhuDay (**LEGAL/IMMUTABLE**) |
 | `monthlyNight` | Soft | Required night shifts per month |
 
 **UX Features**:
@@ -63,6 +63,14 @@ App.tsx
 - `Staff`: {id, name, juhuDay (0-6, JS convention: 0=Sunday)}
 - `ShiftAssignment`: {staffId, date, shift}
 - `Schedule`: {id, name, startDate, assignments[]}
+
+**API Types** (`src/types/api.ts`):
+- `GenerateRequest/Response`: Schedule generation API
+- `FeasibilityCheckRequest/Response`: Pre-generation feasibility check
+- `ApiError`: {code: `INFEASIBLE` | `TIMEOUT` | `INVALID_INPUT`, message}
+
+**Services** (`src/services/solverApi.ts`):
+- `generateSchedule()`, `checkFeasibilityApi()`, `isApiConfigured()`
 
 **Day-of-Week Convention**:
 Frontend uses JavaScript `getDay()` (0=Sunday), Backend uses Python `weekday()` (0=Monday). Backend converts: `python_weekday = (js_day - 1) % 7`
@@ -142,6 +150,10 @@ source .venv/bin/activate && chalice local
 - State: localStorage keys prefixed `shift-schedule-`
 - Tests: `src/constraints/__tests__/*.test.ts`
 - Commands: `.claude/commands/*.md` (e.g., `/dev`, `/dev-stop`)
+- Insights: `.claude/.insights/*.md`:
+  - `constraint-architecture-evolution.md`: 3D constraint model (Authority/Mutability/Strength), juhu as LEGAL/IMMUTABLE
+  - `infeasible-diagnosis-strategy.md`: Two-phase solve + UNSAT core extraction via `SufficientAssumptionsForInfeasibility()`
+  - `soft-constraint-scaling.md`: Tier-based objective function, PenaltyTerm abstraction for future soft constraints
 - When adding a constraint:
   1. Create constraint file with `check()` using `getSeverityFromConfig(config, 'constraintId')`
   2. Add to `enabledConstraints` and `constraintSeverity` in `ConstraintConfig` type
