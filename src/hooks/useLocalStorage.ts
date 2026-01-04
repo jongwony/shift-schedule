@@ -1,6 +1,41 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
+ * Deep merge two objects. Values from `source` override `target`.
+ * New keys in `target` (not in `source`) are preserved.
+ */
+function deepMerge<T>(target: T, source: Partial<T>): T {
+  if (target === null || typeof target !== 'object' || Array.isArray(target)) {
+    return (source ?? target) as T;
+  }
+  if (source === null || typeof source !== 'object' || Array.isArray(source)) {
+    return (source ?? target) as T;
+  }
+
+  const result = { ...target } as Record<string, unknown>;
+  for (const key of Object.keys(target as object)) {
+    if (key in source) {
+      const targetVal = (target as Record<string, unknown>)[key];
+      const sourceVal = (source as Record<string, unknown>)[key];
+      if (
+        targetVal !== null &&
+        typeof targetVal === 'object' &&
+        !Array.isArray(targetVal) &&
+        sourceVal !== null &&
+        typeof sourceVal === 'object' &&
+        !Array.isArray(sourceVal)
+      ) {
+        result[key] = deepMerge(targetVal, sourceVal);
+      } else {
+        result[key] = sourceVal;
+      }
+    }
+    // Keys only in target are already in result via spread
+  }
+  return result as T;
+}
+
+/**
  * Custom hook for persisting state to localStorage with cross-tab synchronization.
  *
  * Features:
@@ -26,7 +61,12 @@ export function useLocalStorage<T>(
 
     try {
       const item = window.localStorage.getItem(key);
-      return item ? (JSON.parse(item) as T) : initialValue;
+      if (item) {
+        const stored = JSON.parse(item);
+        // Deep merge: initialValue provides schema, stored provides values
+        return deepMerge(initialValue, stored);
+      }
+      return initialValue;
     } catch (error) {
       console.warn(`Error reading localStorage key "${key}":`, error);
       return initialValue;
