@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Generic shift scheduling feasibility checker - validates 28-day (4-week) schedules against 7 constraints in real-time. Shift types: D (Day), E (Evening), N (Night), OFF.
+Generic shift scheduling feasibility checker - validates 28-day (4-week) schedules against 17 constraints (7 hard + 10 soft) in real-time. Shift types: D (Day), E (Evening), N (Night), OFF.
 
 ## Commands
 
@@ -42,16 +42,44 @@ App.tsx
 
 **Constraint System**: Each constraint implements `Constraint` interface with `check(context) => {satisfied, violations[]}`. Severity is user-configurable via `config.constraintSeverity` (hard → error, soft → warning). Registry pattern in `src/constraints/index.ts`.
 
-**7 Constraints** (default severity in parentheses):
-| Constraint | Default | Description |
-|------------|---------|-------------|
-| `staffing` | Hard | Min/max staff per shift type |
-| `shiftOrder` | Hard | Forbidden transitions (N→D, N→E, E→D) |
-| `consecutiveNight` | Hard | Max consecutive night shifts |
-| `nightOffDay` | Hard | N-OFF-D pattern forbidden |
-| `weeklyOff` | Hard | Min OFF days per week (based on weeklyWorkHours) |
-| `juhu` | Hard | Weekly off-day must match staff's juhuDay (**LEGAL/IMMUTABLE**) |
-| `monthlyNight` | Soft | Required night shifts per month |
+**7 Hard Constraints** (법정 규제 - 위반 시 INFEASIBLE):
+| Constraint | Description |
+|------------|-------------|
+| `staffing` | Min/max staff per shift type |
+| `shiftOrder` | Forbidden transitions (N→D, N→E, E→D) |
+| `consecutiveNight` | Max consecutive night shifts |
+| `nightOffDay` | N-OFF-D pattern forbidden |
+| `weeklyOff` | Min OFF days per week (based on weeklyWorkHours) |
+| `juhu` | Weekly off-day must match staff's juhuDay (**LEGAL/IMMUTABLE**) |
+| `monthlyNight` | Required night shifts per month (configurable hard/soft) |
+
+**10 Soft Constraints** (위반 시 페널티):
+
+*근무자 관점 (Worker Perspective):*
+| Constraint | Tier | Weight | Description |
+|------------|------|--------|-------------|
+| `maxConsecutiveWork` | T1 | 100 | Max consecutive work days (default: 5) |
+| `nightBlockPolicy` | T1 | 90 | Prevent isolated night shifts (min block: 2) |
+| `gradualShiftProgression` | T2 | 70 | Prevent D→N direct transition |
+| `maxSameShiftConsecutive` | T2 | 65 | Prevent same shift 5+ consecutive days |
+| `restClustering` | T2 | 60 | Prevent isolated OFF days |
+| `postRestDayShift` | T2 | 50 | Prevent OFF→N transition |
+| `weekendFairness` | T3 | 30 | Fair weekend work distribution |
+| `shiftContinuity` | T3 | 20 | Prevent excessive shift type changes |
+
+*관리자 관점 (Manager Perspective):*
+| Constraint | Tier | Weight | Description |
+|------------|------|--------|-------------|
+| `maxPeriodOff` | T1 | 85 | Max OFF days per period (default: 9) |
+| `maxConsecutiveOff` | T1 | 80 | Max consecutive OFF days (default: 2) |
+
+**Tier System**: T1×1000 > T2×100 > T3×10 - Higher tier always dominates in optimization.
+- T1 근무자: 건강 (maxConsecutiveWork, nightBlockPolicy)
+- T1 관리자: 운영 효율 (maxPeriodOff, maxConsecutiveOff)
+- T2: 회복 (gradualShiftProgression, restClustering, etc.)
+- T3: 삶의 질 (weekendFairness, shiftContinuity)
+
+**Compromise Point**: `restClustering` (T2, promotes 2+ consecutive OFF) + `maxConsecutiveOff` (T1, penalizes 3+ consecutive OFF) converge on **2-day consecutive OFF** as optimal.
 
 **UX Features**:
 - Completeness threshold (50%): Staffing errors suppressed until schedule is half-filled
@@ -63,6 +91,7 @@ App.tsx
 - `Staff`: {id, name, juhuDay (0-6, JS convention: 0=Sunday)}
 - `ShiftAssignment`: {staffId, date, shift}
 - `Schedule`: {id, name, startDate, assignments[]}
+- `SoftConstraintConfig`: Per-constraint `{enabled, maxDays?, minBlockSize?, maxOff?}`
 
 **API Types** (`src/types/api.ts`):
 - `GenerateRequest/Response`: Schedule generation API
@@ -110,8 +139,13 @@ Frontend uses JavaScript `getDay()` (0=Sunday), Backend uses Python `weekday()` 
 - `POST /check-feasibility` - Pre-check mathematical feasibility before generation
 
 **Solver**: `../api/chalicelib/schedule_generator.py` (OR-Tools CP-SAT)
-- Request: `{staff, startDate, constraints, previousPeriodEnd?}`
+- Request: `{staff, startDate, constraints, previousPeriodEnd?}` (constraints includes `softConstraints`)
 - Response: `{success, schedule?, error?}` or `{feasible, reasons[], analysis?}`
+
+**Backend Soft Constraints** (`../api/chalicelib/soft_constraints/`):
+- `types.py`: `PenaltyTerm` dataclass, `SoftConstraint` protocol
+- `objective_builder.py`: `ObjectiveBuilder` with `TIER_SCALES = {1: 1000, 2: 100, 3: 10}`
+- `__init__.py`: `SOFT_CONSTRAINT_CLASSES` registry, `create_constraint(id, config)` factory
 
 **Local development**:
 ```bash
@@ -154,8 +188,16 @@ source .venv/bin/activate && chalice local
   - `constraint-architecture-evolution.md`: 3D constraint model (Authority/Mutability/Strength), juhu as LEGAL/IMMUTABLE
   - `infeasible-diagnosis-strategy.md`: Two-phase solve + UNSAT core extraction via `SufficientAssumptionsForInfeasibility()`
   - `soft-constraint-scaling.md`: Tier-based objective function, PenaltyTerm abstraction for future soft constraints
-- When adding a constraint:
+- When adding a **hard** constraint:
   1. Create constraint file with `check()` using `getSeverityFromConfig(config, 'constraintId')`
   2. Add to `enabledConstraints` and `constraintSeverity` in `ConstraintConfig` type
   3. Add default values in `getDefaultConfig()`
   4. Register in `src/constraints/index.ts`
+  5. Add CP-SAT constraint in `../api/chalicelib/schedule_generator.py`
+- When adding a **soft** constraint:
+  1. Frontend: Create `src/constraints/{id}.ts` with `severityType: 'soft'`, check `config.softConstraints?.{id}?.enabled`
+  2. Add type to `SoftConstraintConfig` in `src/types/constraint.ts`
+  3. Add default in `getDefaultConfig()` under `softConstraints`
+  4. Register in `src/constraints/index.ts`
+  5. Backend: Create `../api/chalicelib/soft_constraints/{snake_case}.py` implementing `SoftConstraint` protocol
+  6. Register in `soft_constraints/__init__.py`

@@ -1,4 +1,4 @@
-import type { ShiftAssignment, DailyStaffing, DayOfWeek, ConstraintSeverity } from './index';
+import type { ShiftAssignment, DailyStaffing, DayOfWeek, ConstraintSeverity, SoftConstraintConfig } from './index';
 
 export type GenerationStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -28,6 +28,7 @@ export interface GenerateRequest {
     weekdayStaffing: DailyStaffing;
     weekendStaffing: DailyStaffing;
     constraintSeverity?: ApiConstraintSeverity;
+    softConstraints?: SoftConstraintConfig;
   };
   previousPeriodEnd?: ShiftAssignment[];
 }

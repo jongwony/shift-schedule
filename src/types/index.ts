@@ -13,6 +13,10 @@ export type {
   DailyStaffing,
   ConstraintConfig,
   ConstraintSeverity,
+  SoftConstraintItemConfig,
+  MaxConsecutiveWorkConfig,
+  NightBlockPolicyConfig,
+  SoftConstraintConfig,
 } from './constraint';
 export type {
   GenerationStatus,

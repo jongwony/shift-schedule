@@ -183,5 +183,21 @@ export function getDefaultConfig(): ConstraintConfig {
       juhu: 'hard',  // 주휴는 기본값 hard (노동법 기반)
       weeklyOff: 'hard',
     },
+    softConstraints: {
+      // Tier 1 - Worker perspective
+      maxConsecutiveWork: { enabled: true, maxDays: 5 },
+      nightBlockPolicy: { enabled: true, minBlockSize: 2 },
+      // Tier 1 - Manager perspective
+      maxPeriodOff: { enabled: false, maxOff: 9 },
+      maxConsecutiveOff: { enabled: false, maxDays: 2 },
+      // Tier 2 - Recovery
+      gradualShiftProgression: { enabled: true },
+      maxSameShiftConsecutive: { enabled: true },
+      restClustering: { enabled: true },
+      postRestDayShift: { enabled: true },
+      // Tier 3 - Quality of life
+      weekendFairness: { enabled: true },
+      shiftContinuity: { enabled: true },
+    },
   };
 }

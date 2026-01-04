@@ -264,6 +264,7 @@ export function useSchedule() {
         weekdayStaffing: config.weekdayStaffing,
         weekendStaffing: config.weekendStaffing,
         constraintSeverity: config.constraintSeverity,
+        softConstraints: config.softConstraints,
       },
     };
 

@@ -32,6 +32,44 @@ export interface DailyStaffing {
 
 export type ConstraintSeverity = 'hard' | 'soft';
 
+// Soft Constraint Configuration Types
+export interface SoftConstraintItemConfig {
+  enabled: boolean;
+}
+
+export interface MaxConsecutiveWorkConfig extends SoftConstraintItemConfig {
+  maxDays: number;
+}
+
+export interface NightBlockPolicyConfig extends SoftConstraintItemConfig {
+  minBlockSize: number;
+}
+
+export interface MaxPeriodOffConfig extends SoftConstraintItemConfig {
+  maxOff: number;
+}
+
+export interface MaxConsecutiveOffConfig extends SoftConstraintItemConfig {
+  maxDays: number;
+}
+
+export interface SoftConstraintConfig {
+  // Tier 1 - Worker perspective
+  maxConsecutiveWork: MaxConsecutiveWorkConfig;
+  nightBlockPolicy: NightBlockPolicyConfig;
+  // Tier 1 - Manager perspective
+  maxPeriodOff: MaxPeriodOffConfig;
+  maxConsecutiveOff: MaxConsecutiveOffConfig;
+  // Tier 2 - Recovery
+  gradualShiftProgression: SoftConstraintItemConfig;
+  maxSameShiftConsecutive: SoftConstraintItemConfig;
+  restClustering: SoftConstraintItemConfig;
+  postRestDayShift: SoftConstraintItemConfig;
+  // Tier 3 - Quality of life
+  weekendFairness: SoftConstraintItemConfig;
+  shiftContinuity: SoftConstraintItemConfig;
+}
+
 export interface ConstraintConfig {
   maxConsecutiveNights: number;
   monthlyNightsRequired: number;
@@ -57,4 +95,6 @@ export interface ConstraintConfig {
     juhu: ConstraintSeverity;
     weeklyOff: ConstraintSeverity;
   };
+  /** Soft constraint configuration for worker preference-based constraints */
+  softConstraints: SoftConstraintConfig;
 }

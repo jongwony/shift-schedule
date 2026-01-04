@@ -2,6 +2,7 @@ import type { ConstraintConfig, ConstraintSeverity } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SoftConstraintSettings } from '@/components/SoftConstraintSettings';
 import { cn } from '@/lib/utils';
 
 interface ConfigPanelProps {
@@ -297,6 +298,13 @@ export function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
           </div>
         </CardContent>
       </Card>
+
+      <SoftConstraintSettings
+        softConstraints={config.softConstraints}
+        onSoftConstraintsChange={(softConstraints) =>
+          onConfigChange({ ...config, softConstraints })
+        }
+      />
     </div>
   );
 }

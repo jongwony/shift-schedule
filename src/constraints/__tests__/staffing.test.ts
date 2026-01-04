@@ -53,6 +53,18 @@ function createTestContext(
       juhu: 'hard',
       weeklyOff: 'hard',
     },
+    softConstraints: {
+      maxConsecutiveWork: { enabled: true, maxDays: 5 },
+      nightBlockPolicy: { enabled: true, minBlockSize: 2 },
+      maxPeriodOff: { enabled: false, maxOff: 9 },
+      maxConsecutiveOff: { enabled: false, maxDays: 2 },
+      gradualShiftProgression: { enabled: true },
+      maxSameShiftConsecutive: { enabled: true },
+      restClustering: { enabled: true },
+      postRestDayShift: { enabled: true },
+      weekendFairness: { enabled: true },
+      shiftContinuity: { enabled: true },
+    },
   };
 
   return { schedule, staff, config, previousPeriodEnd: [], scheduleCompleteness: 1 };
