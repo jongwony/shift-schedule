@@ -53,7 +53,7 @@ export function StaffList({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
       handleAdd();
     }
   };

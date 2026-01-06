@@ -1,4 +1,4 @@
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StaffList } from '@/components/StaffList';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
@@ -35,22 +35,50 @@ function App() {
     setShowAllViolations,
     setHoveredCell,
     setConfig,
-    exportToJSON,
     importFromJSON,
   } = useSchedule();
 
-  // Export handler
-  const handleExport = () => {
-    const json = exportToJSON();
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `shift-schedule-${schedule.startDate}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  // Export handler - TSV to clipboard for spreadsheet paste
+  const handleExport = async () => {
+    // Generate 28 dates from startDate
+    const dates: string[] = [];
+    const start = new Date(schedule.startDate);
+    for (let i = 0; i < 28; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      dates.push(d.toISOString().split('T')[0]);
+    }
+
+    // Build assignment lookup: Map<staffId-date, shift>
+    const assignmentMap = new Map<string, string>();
+    for (const a of schedule.assignments) {
+      assignmentMap.set(`${a.staffId}-${a.date}`, a.shift);
+    }
+
+    // Header row: 이름 + dates (M/D format)
+    const header = ['이름', ...dates.map(d => {
+      const date = new Date(d);
+      return `${date.getMonth() + 1}/${date.getDate()}`;
+    })];
+
+    // Data rows: each staff's shifts
+    const rows = staff.map(s => {
+      const shifts = dates.map(d => assignmentMap.get(`${s.id}-${d}`) ?? '');
+      return [s.name, ...shifts];
+    });
+
+    // Combine and convert to TSV
+    const tsv = [header, ...rows]
+      .map(row => row.join('\t'))
+      .join('\n');
+
+    // Copy to clipboard
+    try {
+      await navigator.clipboard.writeText(tsv);
+      toast.success('클립보드에 복사되었습니다');
+    } catch {
+      toast.error('복사에 실패했습니다');
+    }
   };
 
   // Import handler
@@ -112,14 +140,14 @@ function App() {
                 )}
                 <button
                   onClick={handleExport}
-                  aria-label="근무표를 JSON 파일로 내보내기"
+                  aria-label="근무표를 클립보드에 복사"
                   className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
                 >
                   <span className="flex items-center gap-1.5">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
-                    <span className="hidden sm:inline">내보내기</span>
+                    <span className="hidden sm:inline">복사</span>
                   </span>
                 </button>
                 <button

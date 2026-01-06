@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Generic shift scheduling feasibility checker - validates 28-day (4-week) schedules against 17 constraints (7 hard + 10 soft) in real-time. Shift types: D (Day), E (Evening), N (Night), OFF.
+Generic shift scheduling feasibility checker - validates 28-day (4-week) schedules against 16 constraints (6 hard + 10 soft) in real-time. Shift types: D (Day), E (Evening), N (Night), OFF.
 
 ## Commands
 
@@ -42,16 +42,20 @@ App.tsx
 
 **Constraint System**: Each constraint implements `Constraint` interface with `check(context) => {satisfied, violations[]}`. Severity is user-configurable via `config.constraintSeverity` (hard → error, soft → warning). Registry pattern in `src/constraints/index.ts`.
 
-**7 Hard Constraints** (법정 규제 - 위반 시 INFEASIBLE):
+**6 Hard Constraints** (법정 규제 - 위반 시 INFEASIBLE):
 | Constraint | Description |
 |------------|-------------|
-| `locked` | User-locked cell assignments (must be honored) |
-| `staffing` | Min/max staff per shift type |
+| `staffing` | Min/max staff per shift type (supports date-specific overrides) |
 | `shiftOrder` | Forbidden transitions (N→D, N→E, E→D) |
 | `consecutiveNight` | Max consecutive night shifts |
 | `nightOffDay` | N-OFF-D pattern forbidden |
 | `weeklyOff` | Min OFF days per week (based on weeklyWorkHours) |
 | `monthlyNight` | Required night shifts per month (configurable hard/soft) |
+
+**Backend-Only Constraints** (Backend solver에서만 처리):
+| Constraint | Description |
+|------------|-------------|
+| `locked` | User-locked cell assignments (via `lockedAssignments` in API request) |
 | `prevPeriodWork` | Previous period trailing work + current must not exceed maxDays |
 
 **주휴일 자동 결정** (Solver-Determined JuhuDay):
@@ -95,12 +99,15 @@ App.tsx
 - Auto-generation: Backend API integration (`VITE_SOLVER_API_URL`)
 - Cell Lock (고정): Right-click (desktop) or long-press 500ms (mobile) to lock cells; locked cells preserved during auto-generation
 - Previous Period Input: 7-day input window for boundary constraint checking
+- Staffing Override: Click D/E/N count row in grid footer to set date-specific staffing requirements (min=max=input)
+- Export: TSV to clipboard (Ctrl+V into spreadsheet); Import: JSON file for full state restore
 
 **Core Types** (`src/types/`):
 - `Staff`: {id, name}
 - `ShiftAssignment`: {staffId, date, shift, isLocked?}
 - `Schedule`: {id, name, startDate, assignments[], staffJuhuDays?}
 - `SoftConstraintConfig`: Per-constraint `{enabled, maxDays?, minBlockSize?, maxOff?}`
+- `StaffingOverrides`: `Record<string, {D?: number, E?: number, N?: number}>` - date-specific staffing counts
 
 **API Types** (`src/types/api.ts`):
 - `GenerateRequest`: {staff, startDate, constraints, previousPeriodEnd?, lockedAssignments?}
