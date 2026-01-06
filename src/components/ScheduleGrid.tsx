@@ -14,6 +14,7 @@ interface ScheduleGridProps {
   violations: Violation[];
   affectedCells: Map<string, ImpactReason>;
   onAssignmentChange: (staffId: string, date: string, shift: ShiftType) => void;
+  onToggleLock?: (staffId: string, date: string) => void;
   onEditingCellChange?: (cell: { staffId: string; date: string } | null) => void;
   onHoverCellChange?: (cell: { staffId: string; date: string } | null) => void;
 }
@@ -24,6 +25,7 @@ export function ScheduleGrid({
   violations,
   affectedCells,
   onAssignmentChange,
+  onToggleLock,
   onEditingCellChange,
   onHoverCellChange,
 }: ScheduleGridProps) {
@@ -193,9 +195,11 @@ export function ScheduleGrid({
                         violations={cellViolations}
                         isAffected={affectReason !== undefined}
                         affectReason={affectReason}
+                        isLocked={assignment?.isLocked ?? false}
                         onChange={(shift) =>
                           onAssignmentChange(staffMember.id, dateString, shift)
                         }
+                        onToggleLock={() => onToggleLock?.(staffMember.id, dateString)}
                         onFocus={() =>
                           onEditingCellChange?.({ staffId: staffMember.id, date: dateString })
                         }

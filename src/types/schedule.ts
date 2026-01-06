@@ -4,6 +4,7 @@ export interface ShiftAssignment {
   staffId: string;
   date: string;
   shift: ShiftType;
+  isLocked?: boolean;
 }
 
 export interface Schedule {

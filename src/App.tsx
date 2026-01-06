@@ -28,6 +28,7 @@ function App() {
     removeStaff,
     updateStaff,
     updateAssignment,
+    toggleLock,
     setStartDate,
     setPreviousPeriodEnd,
     generateAutoSchedule,
@@ -184,6 +185,7 @@ function App() {
                     violations={feasibilityResult?.violations ?? []}
                     affectedCells={affectedCells}
                     onAssignmentChange={updateAssignment}
+                    onToggleLock={toggleLock}
                     onEditingCellChange={setEditingCell}
                     onHoverCellChange={setHoveredCell}
                   />

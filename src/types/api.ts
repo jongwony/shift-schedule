@@ -31,6 +31,7 @@ export interface GenerateRequest {
     softConstraints?: SoftConstraintConfig;
   };
   previousPeriodEnd?: ShiftAssignment[];
+  lockedAssignments?: ShiftAssignment[];
 }
 
 export interface GenerateResponse {

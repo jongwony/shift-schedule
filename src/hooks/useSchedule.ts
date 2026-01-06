@@ -209,13 +209,45 @@ export function useSchedule() {
 
         let newAssignments: ShiftAssignment[];
         if (existingIndex >= 0) {
+          // Preserve isLocked when changing shift
+          const existing = prev.assignments[existingIndex];
           newAssignments = [...prev.assignments];
-          newAssignments[existingIndex] = { staffId, date, shift };
+          newAssignments[existingIndex] = { staffId, date, shift, isLocked: existing.isLocked };
         } else {
           newAssignments = [...prev.assignments, { staffId, date, shift }];
         }
 
         return { ...prev, assignments: newAssignments };
+      });
+    },
+    [setSchedule]
+  );
+
+  const toggleLock = useCallback(
+    (staffId: string, date: string) => {
+      setSchedule((prev) => {
+        const existingIndex = prev.assignments.findIndex(
+          (a) => a.staffId === staffId && a.date === date
+        );
+
+        if (existingIndex >= 0) {
+          // Toggle lock on existing assignment
+          const newAssignments = [...prev.assignments];
+          newAssignments[existingIndex] = {
+            ...newAssignments[existingIndex],
+            isLocked: !newAssignments[existingIndex].isLocked,
+          };
+          return { ...prev, assignments: newAssignments };
+        } else {
+          // Empty cell: create OFF assignment with lock
+          return {
+            ...prev,
+            assignments: [
+              ...prev.assignments,
+              { staffId, date, shift: 'OFF' as ShiftType, isLocked: true },
+            ],
+          };
+        }
       });
     },
     [setSchedule]
@@ -254,6 +286,9 @@ export function useSchedule() {
 
     setGenerationStatus('loading');
 
+    // Extract locked assignments
+    const lockedAssignments = schedule.assignments.filter((a) => a.isLocked);
+
     const requestPayload = {
       staff: staff.map((s) => ({ id: s.id, name: s.name, juhuDay: s.juhuDay })),
       startDate: schedule.startDate,
@@ -288,17 +323,33 @@ export function useSchedule() {
       const response = await generateSchedule({
         ...requestPayload,
         previousPeriodEnd: previousPeriodEnd.length > 0 ? previousPeriodEnd : undefined,
+        lockedAssignments: lockedAssignments.length > 0 ? lockedAssignments : undefined,
       });
 
       if (response.success && response.schedule) {
+        // Merge: keep locked assignments, add non-conflicting generated assignments
+        const mergedAssignments = [
+          ...lockedAssignments, // Keep locked assignments (with isLocked flag)
+          ...response.schedule!.assignments.filter(
+            (generated) =>
+              !lockedAssignments.some(
+                (locked) => locked.staffId === generated.staffId && locked.date === generated.date
+              )
+          ),
+        ];
+
         setSchedule((prev) => ({
           ...prev,
-          assignments: response.schedule!.assignments,
+          assignments: mergedAssignments,
         }));
         setGenerationStatus('success');
         setShowAllViolations(true);
         setPreCheckResult(null); // Clear pre-check result on success
-        toast.success('근무표가 자동 생성되었습니다.');
+        const lockedCount = lockedAssignments.length;
+        const message = lockedCount > 0
+          ? `근무표가 자동 생성되었습니다. (고정: ${lockedCount}개)`
+          : '근무표가 자동 생성되었습니다.';
+        toast.success(message);
       } else {
         setGenerationStatus('error');
         const errorMessage = response.error?.message ?? '알 수 없는 오류가 발생했습니다.';
@@ -309,7 +360,7 @@ export function useSchedule() {
       const message = error instanceof Error ? error.message : '알 수 없는 오류';
       toast.error(`API 오류: ${message}`);
     }
-  }, [staff, schedule.startDate, config, previousPeriodEnd, setSchedule]);
+  }, [staff, schedule.startDate, schedule.assignments, config, previousPeriodEnd, setSchedule]);
 
   // ==================== Export/Import Actions ====================
 
@@ -371,6 +422,7 @@ export function useSchedule() {
 
     // Schedule actions
     updateAssignment,
+    toggleLock,
     setStartDate,
     clearSchedule,
     setPreviousPeriodEnd,
