@@ -3,7 +3,6 @@ import { nightOffDayConstraint } from './nightOffDay';
 import { consecutiveNightConstraint } from './consecutiveNight';
 import { monthlyNightConstraint } from './monthlyNight';
 import { staffingConstraint } from './staffing';
-import { juhuConstraint } from './juhu';
 import { weeklyOffConstraint } from './weeklyOff';
 // Soft constraints - Worker perspective
 import { maxConsecutiveWorkConstraint } from './maxConsecutiveWork';
@@ -28,7 +27,6 @@ export const constraintRegistry: Constraint[] = [
   consecutiveNightConstraint,
   monthlyNightConstraint,
   staffingConstraint,
-  juhuConstraint,
   weeklyOffConstraint,
   // Soft constraints - Worker perspective (T1)
   maxConsecutiveWorkConstraint,
@@ -51,7 +49,6 @@ export { nightOffDayConstraint } from './nightOffDay';
 export { consecutiveNightConstraint } from './consecutiveNight';
 export { monthlyNightConstraint } from './monthlyNight';
 export { staffingConstraint } from './staffing';
-export { juhuConstraint } from './juhu';
 export { weeklyOffConstraint } from './weeklyOff';
 // Soft constraints - Worker perspective
 export { maxConsecutiveWorkConstraint } from './maxConsecutiveWork';

@@ -26,7 +26,6 @@ function App() {
     showAllViolations,
     addStaff,
     removeStaff,
-    updateStaff,
     updateAssignment,
     toggleLock,
     setStartDate,
@@ -156,7 +155,6 @@ function App() {
                     staff={staff}
                     onAddStaff={addStaff}
                     onRemoveStaff={removeStaff}
-                    onUpdateStaff={updateStaff}
                   />
                 </ErrorBoundary>
               </TabsContent>

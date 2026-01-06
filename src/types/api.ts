@@ -14,12 +14,11 @@ export interface ApiConstraintSeverity {
   consecutiveNight?: ConstraintSeverity;
   monthlyNight?: ConstraintSeverity;
   staffing?: ConstraintSeverity;
-  juhu?: ConstraintSeverity;
   weeklyOff?: ConstraintSeverity;
 }
 
 export interface GenerateRequest {
-  staff: Array<{ id: string; name: string; juhuDay: DayOfWeek }>;
+  staff: Array<{ id: string; name: string }>;
   startDate: string;
   constraints: {
     maxConsecutiveNights: number;
@@ -38,10 +37,11 @@ export interface GenerateResponse {
   success: boolean;
   schedule?: { assignments: ShiftAssignment[] };
   error?: ApiError;
+  staffJuhuDays?: Array<{ staffId: string; juhuDay: DayOfWeek }>;
 }
 
 export interface FeasibilityCheckRequest {
-  staff: Array<{ id: string; name: string; juhuDay: DayOfWeek }>;
+  staff: Array<{ id: string; name: string }>;
   startDate: string;
   constraints: {
     maxConsecutiveNights: number;

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import type { Staff, DayOfWeek } from '@/types';
-import { DAY_NAMES } from '@/utils/dayUtils';
+import type { Staff } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,19 +8,16 @@ import { cn } from '@/lib/utils';
 
 interface StaffListProps {
   staff: Staff[];
-  onAddStaff: (name: string, juhuDay: DayOfWeek) => void;
+  onAddStaff: (name: string) => void;
   onRemoveStaff: (id: string) => void;
-  onUpdateStaff: (id: string, updates: Partial<Pick<Staff, 'name' | 'juhuDay'>>) => void;
 }
 
 export function StaffList({
   staff,
   onAddStaff,
   onRemoveStaff,
-  onUpdateStaff,
 }: StaffListProps) {
   const [newName, setNewName] = useState('');
-  const [newJuhuDay, setNewJuhuDay] = useState<DayOfWeek>(0);
   const [nameError, setNameError] = useState<string | null>(null);
 
   const validateName = (name: string): string | null => {
@@ -44,9 +40,8 @@ export function StaffList({
       setNameError(error);
       return;
     }
-    onAddStaff(newName.trim(), newJuhuDay);
+    onAddStaff(newName.trim());
     setNewName('');
-    setNewJuhuDay(0);
     setNameError(null);
   };
 
@@ -89,21 +84,6 @@ export function StaffList({
                 </p>
               )}
             </div>
-            <div className="w-24">
-              <Label htmlFor="juhu-day">주휴일</Label>
-              <select
-                id="juhu-day"
-                value={newJuhuDay}
-                onChange={(e) => setNewJuhuDay(Number(e.target.value) as DayOfWeek)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                {([0, 1, 2, 3, 4, 5, 6] as DayOfWeek[]).map((day) => (
-                  <option key={day} value={day}>
-                    {DAY_NAMES[day]}
-                  </option>
-                ))}
-              </select>
-            </div>
             <Button onClick={handleAdd} aria-label="직원 추가">
               추가
             </Button>
@@ -123,38 +103,16 @@ export function StaffList({
               {staff.map((s) => (
                 <li
                   key={s.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                    <span className="font-medium">{s.name}</span>
-                    <span className="text-sm text-gray-500">
-                      주휴: {DAY_NAMES[s.juhuDay]}요일
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 self-end sm:self-auto">
-                    <select
-                      value={s.juhuDay}
-                      onChange={(e) =>
-                        onUpdateStaff(s.id, {
-                          juhuDay: Number(e.target.value) as DayOfWeek,
-                        })
-                      }
-                      className="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
-                    >
-                      {([0, 1, 2, 3, 4, 5, 6] as DayOfWeek[]).map((day) => (
-                        <option key={day} value={day}>
-                          {DAY_NAMES[day]}
-                        </option>
-                      ))}
-                    </select>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => onRemoveStaff(s.id)}
-                    >
-                      삭제
-                    </Button>
-                  </div>
+                  <span className="font-medium">{s.name}</span>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => onRemoveStaff(s.id)}
+                  >
+                    삭제
+                  </Button>
                 </li>
               ))}
             </ul>

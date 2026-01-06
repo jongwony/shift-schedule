@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Generic shift scheduling feasibility checker - validates 28-day (4-week) schedules against 18 constraints (8 hard + 10 soft) in real-time. Shift types: D (Day), E (Evening), N (Night), OFF.
+Generic shift scheduling feasibility checker - validates 28-day (4-week) schedules against 17 constraints (7 hard + 10 soft) in real-time. Shift types: D (Day), E (Evening), N (Night), OFF.
 
 ## Commands
 
@@ -42,7 +42,7 @@ App.tsx
 
 **Constraint System**: Each constraint implements `Constraint` interface with `check(context) => {satisfied, violations[]}`. Severity is user-configurable via `config.constraintSeverity` (hard → error, soft → warning). Registry pattern in `src/constraints/index.ts`.
 
-**8 Hard Constraints** (법정 규제 - 위반 시 INFEASIBLE):
+**7 Hard Constraints** (법정 규제 - 위반 시 INFEASIBLE):
 | Constraint | Description |
 |------------|-------------|
 | `locked` | User-locked cell assignments (must be honored) |
@@ -51,9 +51,14 @@ App.tsx
 | `consecutiveNight` | Max consecutive night shifts |
 | `nightOffDay` | N-OFF-D pattern forbidden |
 | `weeklyOff` | Min OFF days per week (based on weeklyWorkHours) |
-| `juhu` | Weekly off-day must match staff's juhuDay (**LEGAL/IMMUTABLE**) |
 | `monthlyNight` | Required night shifts per month (configurable hard/soft) |
 | `prevPeriodWork` | Previous period trailing work + current must not exceed maxDays |
+
+**주휴일 자동 결정** (Solver-Determined JuhuDay):
+- Backend solver가 각 직원의 최적 주휴일을 IntVar로 결정
+- 요일별 주휴 인원 분산 최적화 (min-max spread, T1 weight=95)
+- 28일 기간 내 동일 주휴일 유지
+- Response의 `staffJuhuDays`로 결정된 주휴일 반환, UI 행 헤더에 표시
 
 **10 Soft Constraints** (위반 시 페널티):
 
@@ -86,20 +91,20 @@ App.tsx
 **UX Features**:
 - Completeness threshold (50%): Staffing errors suppressed until schedule is half-filled
 - Hard/Soft distinction: Soft violations shown with toggle after auto-generation, filtered by cell during manual editing
-- Cascading visualization: Hover shows affected cells (staffing/sequence/juhu)
+- Cascading visualization: Hover shows affected cells (staffing/sequence)
 - Auto-generation: Backend API integration (`VITE_SOLVER_API_URL`)
 - Cell Lock (고정): Right-click (desktop) or long-press 500ms (mobile) to lock cells; locked cells preserved during auto-generation
 - Previous Period Input: 7-day input window for boundary constraint checking
 
 **Core Types** (`src/types/`):
-- `Staff`: {id, name, juhuDay (0-6, JS convention: 0=Sunday)}
+- `Staff`: {id, name}
 - `ShiftAssignment`: {staffId, date, shift, isLocked?}
-- `Schedule`: {id, name, startDate, assignments[]}
+- `Schedule`: {id, name, startDate, assignments[], staffJuhuDays?}
 - `SoftConstraintConfig`: Per-constraint `{enabled, maxDays?, minBlockSize?, maxOff?}`
 
 **API Types** (`src/types/api.ts`):
 - `GenerateRequest`: {staff, startDate, constraints, previousPeriodEnd?, lockedAssignments?}
-- `GenerateResponse`: {success, schedule?, error?}
+- `GenerateResponse`: {success, schedule?, error?, staffJuhuDays?}
 - `FeasibilityCheckRequest/Response`: Pre-generation feasibility check
 - `ApiError`: {code: `INFEASIBLE` | `TIMEOUT` | `INVALID_INPUT`, message}
 
@@ -110,7 +115,9 @@ App.tsx
 Frontend uses JavaScript `getDay()` (0=Sunday), Backend uses Python `weekday()` (0=Monday). Backend converts: `python_weekday = (js_day - 1) % 7`
 
 **localStorage Schema Migration**:
-`useLocalStorage` hook deep-merges `initialValue` with stored data, ensuring new config fields (e.g., `constraintSeverity.juhu`) are added to existing user data.
+- `useLocalStorage` hook deep-merges `initialValue` with stored data
+- Schema version 2: juhuDay removed from Staff (solver auto-determines)
+- Migration clears staff/schedule/previousPeriod data and removes juhu-related config fields
 
 ## Utilities
 
@@ -123,7 +130,6 @@ Frontend uses JavaScript `getDay()` (0=Sunday), Backend uses Python `weekday()` 
 **Impact** (`src/utils/impactCalculator.ts`): Cascading visualization rules:
 - `staffing`: All other staff on same date
 - `sequence`: Same staff ±2 days (for shiftOrder, consecutiveNight)
-- `juhu`: Same staff's juhuDay dates across the 4-week period
 
 ## State Management
 
@@ -147,7 +153,7 @@ Frontend uses JavaScript `getDay()` (0=Sunday), Backend uses Python `weekday()` 
 
 **Solver**: `../api/chalicelib/schedule_generator.py` (OR-Tools CP-SAT)
 - Request: `{staff, startDate, constraints, previousPeriodEnd?}` (constraints includes `softConstraints`)
-- Response: `{success, schedule?, error?}` or `{feasible, reasons[], analysis?}`
+- Response: `{success, schedule?, staffJuhuDays?, error?}` or `{feasible, reasons[], analysis?}`
 
 **Backend Soft Constraints** (`../api/chalicelib/soft_constraints/`):
 - `types.py`: `PenaltyTerm` dataclass, `SoftConstraint` protocol
@@ -159,7 +165,7 @@ Frontend uses JavaScript `getDay()` (0=Sunday), Backend uses Python `weekday()` 
 - `shifts`: CP-SAT decision variables `{(s, d, sh): BoolVar}`
 - `indices`: `{D: 0, E: 1, N: 2, OFF: 3}`
 - `num_staff`, `num_days`, `start_date`, `config`
-- `staff_list`: `[{id, name, juhuDay}]`
+- `staff_list`: `[{id, name}]`
 - `previous_period_end`: `[{staffId, date, shift}]` (up to 7 days)
 
 **Local development**:
@@ -182,7 +188,7 @@ source .venv/bin/activate && chalice local
 - `.env`: `VITE_SOLVER_API_URL=http://localhost:8000` (local, uses `export` for direnv compatibility)
 - `.env.production`: Production API URL (auto-loaded by Vite build)
 
-**constraintSeverity flow**: Frontend config → API → CP-SAT solver. When `juhu: 'hard'`, solver enforces `model.Add(OFF == 1)` on juhu days (INFEASIBLE if understaffed). When `juhu: 'soft'`, violations are penalized but allowed.
+**constraintSeverity flow**: Frontend config → API → CP-SAT solver. Severity determines enforcement level (hard → INFEASIBLE on violation, soft → penalty only).
 
 **Backend deployment**: Lambda Container Image (ARM64) due to ortools binary size. See `../api/Dockerfile.lambda`.
 
@@ -200,7 +206,7 @@ source .venv/bin/activate && chalice local
 - Tests: `src/constraints/__tests__/*.test.ts`
 - Commands: `.claude/commands/*.md` (e.g., `/dev`, `/dev-stop`)
 - Insights: `.claude/.insights/*.md`:
-  - `constraint-architecture-evolution.md`: 3D constraint model (Authority/Mutability/Strength), juhu as LEGAL/IMMUTABLE
+  - `constraint-architecture-evolution.md`: 3D constraint model (Authority/Mutability/Strength)
   - `infeasible-diagnosis-strategy.md`: Two-phase solve + UNSAT core extraction via `SufficientAssumptionsForInfeasibility()`
   - `soft-constraint-scaling.md`: Tier-based objective function, PenaltyTerm abstraction for future soft constraints
 - When adding a **hard** constraint:

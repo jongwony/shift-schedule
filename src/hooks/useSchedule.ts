@@ -2,7 +2,6 @@ import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type {
   Staff,
-  DayOfWeek,
   Schedule,
   ShiftAssignment,
   ShiftType,
@@ -27,7 +26,61 @@ const STORAGE_KEYS = {
   schedule: 'shift-schedule-current',
   config: 'shift-schedule-config',
   previousPeriod: 'shift-schedule-previous',
+  schemaVersion: 'shift-schedule-version',
 } as const;
+
+// Schema version: increment when localStorage structure changes
+const CURRENT_SCHEMA_VERSION = 2;
+
+/**
+ * Check and migrate localStorage schema.
+ * Version 2: juhuDay removed from Staff (solver auto-determines).
+ * Returns true if migration occurred (data was reset).
+ */
+function migrateStorageIfNeeded(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  const storedVersion = localStorage.getItem(STORAGE_KEYS.schemaVersion);
+  const version = storedVersion ? parseInt(storedVersion, 10) : 1;
+
+  if (version < CURRENT_SCHEMA_VERSION) {
+    // Clear staff and schedule data
+    localStorage.removeItem(STORAGE_KEYS.staff);
+    localStorage.removeItem(STORAGE_KEYS.schedule);
+    localStorage.removeItem(STORAGE_KEYS.previousPeriod);
+
+    // Clean up juhu-related fields from config (v1 → v2 migration)
+    const storedConfig = localStorage.getItem(STORAGE_KEYS.config);
+    if (storedConfig) {
+      try {
+        const config = JSON.parse(storedConfig);
+        if (config.constraintSeverity) {
+          delete config.constraintSeverity.juhu;
+        }
+        if (config.enabledConstraints) {
+          delete config.enabledConstraints.juhu;
+        }
+        localStorage.setItem(STORAGE_KEYS.config, JSON.stringify(config));
+      } catch {
+        // If parsing fails, remove config entirely
+        localStorage.removeItem(STORAGE_KEYS.config);
+      }
+    }
+
+    localStorage.setItem(STORAGE_KEYS.schemaVersion, String(CURRENT_SCHEMA_VERSION));
+    return true;
+  }
+
+  // Ensure version is set for new users
+  if (!storedVersion) {
+    localStorage.setItem(STORAGE_KEYS.schemaVersion, String(CURRENT_SCHEMA_VERSION));
+  }
+
+  return false;
+}
+
+// Run migration immediately on module load (before useLocalStorage hooks)
+migrateStorageIfNeeded();
 
 /**
  * Generate a unique ID for entities.
@@ -169,11 +222,10 @@ export function useSchedule() {
 
   // ==================== Staff Actions ====================
 
-  const addStaff = useCallback((name: string, juhuDay: DayOfWeek) => {
+  const addStaff = useCallback((name: string) => {
     const newStaff: Staff = {
       id: generateId(),
       name,
-      juhuDay,
     };
     setStaff((prev) => [...prev, newStaff]);
     toast.success(`${name} 직원이 추가되었습니다.`);
@@ -190,7 +242,7 @@ export function useSchedule() {
   }, [setStaff, setSchedule, setPreviousPeriodEnd]);
 
   const updateStaff = useCallback(
-    (staffId: string, updates: Partial<Pick<Staff, 'name' | 'juhuDay'>>) => {
+    (staffId: string, updates: Partial<Pick<Staff, 'name'>>) => {
       setStaff((prev) =>
         prev.map((s) => (s.id === staffId ? { ...s, ...updates } : s))
       );
@@ -290,7 +342,7 @@ export function useSchedule() {
     const lockedAssignments = schedule.assignments.filter((a) => a.isLocked);
 
     const requestPayload = {
-      staff: staff.map((s) => ({ id: s.id, name: s.name, juhuDay: s.juhuDay })),
+      staff: staff.map((s) => ({ id: s.id, name: s.name })),
       startDate: schedule.startDate,
       constraints: {
         maxConsecutiveNights: config.maxConsecutiveNights,
@@ -341,6 +393,7 @@ export function useSchedule() {
         setSchedule((prev) => ({
           ...prev,
           assignments: mergedAssignments,
+          staffJuhuDays: response.staffJuhuDays, // Solver가 결정한 주휴일 저장
         }));
         setGenerationStatus('success');
         setShowAllViolations(true);

@@ -1,3 +1,5 @@
+import type { DayOfWeek } from './staff';
+
 export type ShiftType = 'D' | 'E' | 'N' | 'OFF';
 
 export interface ShiftAssignment {
@@ -12,6 +14,7 @@ export interface Schedule {
   name: string;
   startDate: string;
   assignments: ShiftAssignment[];
+  staffJuhuDays?: Array<{ staffId: string; juhuDay: DayOfWeek }>;
 }
 
 export interface PreviousPeriodData {

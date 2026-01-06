@@ -82,7 +82,6 @@ export interface ConstraintConfig {
     consecutiveNight: boolean;
     monthlyNight: boolean;
     staffing: boolean;
-    juhu: boolean;
     weeklyOff: boolean;
   };
   /** User-configurable severity per constraint (hard = error, soft = warning) */
@@ -92,7 +91,6 @@ export interface ConstraintConfig {
     consecutiveNight: ConstraintSeverity;
     monthlyNight: ConstraintSeverity;
     staffing: ConstraintSeverity;
-    juhu: ConstraintSeverity;
     weeklyOff: ConstraintSeverity;
   };
   /** Soft constraint configuration for worker preference-based constraints */

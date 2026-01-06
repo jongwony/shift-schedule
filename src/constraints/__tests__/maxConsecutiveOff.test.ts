@@ -16,7 +16,7 @@ function createTestContext(
     assignments,
   };
 
-  const staff: Staff[] = [{ id: 'staff-1', name: '홍길동', juhuDay: 0 }];
+  const staff: Staff[] = [{ id: 'staff-1', name: '홍길동' }];
 
   const config: ConstraintConfig = {
     maxConsecutiveNights: 4,
@@ -38,7 +38,6 @@ function createTestContext(
       consecutiveNight: true,
       monthlyNight: true,
       staffing: true,
-      juhu: true,
       weeklyOff: true,
     },
     constraintSeverity: {
@@ -47,7 +46,6 @@ function createTestContext(
       consecutiveNight: 'hard',
       monthlyNight: 'soft',
       staffing: 'hard',
-      juhu: 'hard',
       weeklyOff: 'hard',
     },
     softConstraints: {

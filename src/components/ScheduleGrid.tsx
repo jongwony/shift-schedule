@@ -174,7 +174,14 @@ export function ScheduleGrid({
                     isLastRow && 'border-b-0'
                   )}
                 >
-                  {staffMember.name} ({DAY_NAMES[staffMember.juhuDay]})
+                  {(() => {
+                    const juhuDay = schedule.staffJuhuDays?.find(
+                      (j) => j.staffId === staffMember.id
+                    )?.juhuDay;
+                    return juhuDay !== undefined
+                      ? `${staffMember.name} (${DAY_NAMES[juhuDay]})`
+                      : staffMember.name;
+                  })()}
                 </td>
                 {dates.map(({ date, dateString }) => {
                   const key = getCellKey(staffMember.id, dateString);

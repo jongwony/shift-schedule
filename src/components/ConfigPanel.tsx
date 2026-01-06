@@ -18,7 +18,6 @@ const CONSTRAINT_LABELS: Record<ConstraintKey, string> = {
   consecutiveNight: '연속 나이트 제한',
   monthlyNight: '월간 나이트 요구',
   staffing: '최소 인원 요구',
-  juhu: '주휴 일치',
   weeklyOff: '주간 휴무',
 };
 

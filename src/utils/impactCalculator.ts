@@ -1,6 +1,6 @@
 import type { Schedule, Staff } from '@/types';
 
-export type ImpactReason = 'staffing' | 'sequence' | 'juhu';
+export type ImpactReason = 'staffing' | 'sequence';
 
 export interface CellImpact {
   staffId: string;
@@ -14,7 +14,6 @@ export interface CellImpact {
  * Impact rules:
  * - staffing: All other staff on the same date (staffing count changes)
  * - sequence: Same staff ±2 days (shiftOrder, consecutiveNight constraints)
- * - juhu: Same staff's juhuDay dates in the schedule period (juhu constraint)
  */
 export function calculateCellImpact(
   schedule: Schedule,
@@ -47,30 +46,6 @@ export function calculateCellImpact(
     }
   }
 
-  // 3. Juhu impact: same staff's juhuDay dates in the schedule period
-  const staffMember = staff.find((s) => s.id === targetCell.staffId);
-  if (staffMember) {
-    for (let week = 0; week < 4; week++) {
-      for (let day = 0; day < 7; day++) {
-        const checkDate = new Date(startDate);
-        checkDate.setDate(checkDate.getDate() + week * 7 + day);
-        const checkDateStr = checkDate.toISOString().split('T')[0];
-
-        // Only add if it's the staff's juhuDay and not the target cell
-        if (
-          checkDate.getDay() === staffMember.juhuDay &&
-          checkDateStr !== targetCell.date
-        ) {
-          impacts.push({
-            staffId: targetCell.staffId,
-            date: checkDateStr,
-            reason: 'juhu',
-          });
-        }
-      }
-    }
-  }
-
   return impacts;
 }
 
@@ -90,7 +65,7 @@ export function buildImpactMap(
   const map = new Map<string, ImpactReason>();
   for (const impact of impacts) {
     const key = getCellKey(impact.staffId, impact.date);
-    // If already has an entry, keep the first reason (priority: sequence > juhu > staffing)
+    // If already has an entry, keep the first reason (priority: sequence > staffing)
     if (!map.has(key)) {
       map.set(key, impact.reason);
     }

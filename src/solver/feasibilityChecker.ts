@@ -68,7 +68,6 @@ function constraintIdToConfigKey(id: string): ConstraintId | null {
     'consecutive-night': 'consecutiveNight',
     'monthly-night': 'monthlyNight',
     staffing: 'staffing',
-    juhu: 'juhu',
     'weekly-off': 'weeklyOff',
   };
   return mapping[id] ?? null;
@@ -171,7 +170,6 @@ export function getDefaultConfig(): ConstraintConfig {
       consecutiveNight: true,
       monthlyNight: true,
       staffing: true,
-      juhu: true,
       weeklyOff: true,
     },
     constraintSeverity: {
@@ -180,7 +178,6 @@ export function getDefaultConfig(): ConstraintConfig {
       consecutiveNight: 'hard',
       monthlyNight: 'soft',
       staffing: 'hard',
-      juhu: 'hard',  // 주휴는 기본값 hard (노동법 기반)
       weeklyOff: 'hard',
     },
     softConstraints: {

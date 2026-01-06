@@ -23,7 +23,6 @@ interface ShiftCellProps {
 const IMPACT_STYLES: Record<ImpactReason, { bg: string; label: string }> = {
   staffing: { bg: 'bg-blue-50', label: '같은 날짜 인원 수 영향' },
   sequence: { bg: 'bg-orange-50', label: '연속 근무 규칙 영향' },
-  juhu: { bg: 'bg-purple-50', label: '주후 휴무 규칙 영향' },
 };
 
 const SHIFT_CONFIG: Record<ShiftType, { bg: string; hover: string; text: string; icon: string; label: string }> = {
@@ -157,7 +156,6 @@ export function ShiftCell({
           // Affected border colors by reason
           isAffected && !hasError && !hasWarning && affectReason === 'staffing' && 'border-blue-400',
           isAffected && !hasError && !hasWarning && affectReason === 'sequence' && 'border-orange-400',
-          isAffected && !hasError && !hasWarning && affectReason === 'juhu' && 'border-purple-400',
           // Locked state
           isLocked && !hasError && !hasWarning && 'ring-2 ring-green-500 border-green-400',
           // Pressing feedback (for long-press)
