@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Generic shift scheduling feasibility checker - validates 28-day (4-week) schedules against 17 constraints (7 hard + 10 soft) in real-time. Shift types: D (Day), E (Evening), N (Night), OFF.
+Generic shift scheduling feasibility checker - validates 28-day (4-week) schedules against 18 constraints (8 hard + 10 soft) in real-time. Shift types: D (Day), E (Evening), N (Night), OFF.
 
 ## Commands
 
@@ -42,9 +42,10 @@ App.tsx
 
 **Constraint System**: Each constraint implements `Constraint` interface with `check(context) => {satisfied, violations[]}`. Severity is user-configurable via `config.constraintSeverity` (hard → error, soft → warning). Registry pattern in `src/constraints/index.ts`.
 
-**7 Hard Constraints** (법정 규제 - 위반 시 INFEASIBLE):
+**8 Hard Constraints** (법정 규제 - 위반 시 INFEASIBLE):
 | Constraint | Description |
 |------------|-------------|
+| `locked` | User-locked cell assignments (must be honored) |
 | `staffing` | Min/max staff per shift type |
 | `shiftOrder` | Forbidden transitions (N→D, N→E, E→D) |
 | `consecutiveNight` | Max consecutive night shifts |
@@ -52,6 +53,7 @@ App.tsx
 | `weeklyOff` | Min OFF days per week (based on weeklyWorkHours) |
 | `juhu` | Weekly off-day must match staff's juhuDay (**LEGAL/IMMUTABLE**) |
 | `monthlyNight` | Required night shifts per month (configurable hard/soft) |
+| `prevPeriodWork` | Previous period trailing work + current must not exceed maxDays |
 
 **10 Soft Constraints** (위반 시 페널티):
 
@@ -86,15 +88,18 @@ App.tsx
 - Hard/Soft distinction: Soft violations shown with toggle after auto-generation, filtered by cell during manual editing
 - Cascading visualization: Hover shows affected cells (staffing/sequence/juhu)
 - Auto-generation: Backend API integration (`VITE_SOLVER_API_URL`)
+- Cell Lock (고정): Right-click (desktop) or long-press 500ms (mobile) to lock cells; locked cells preserved during auto-generation
+- Previous Period Input: 7-day input window for boundary constraint checking
 
 **Core Types** (`src/types/`):
 - `Staff`: {id, name, juhuDay (0-6, JS convention: 0=Sunday)}
-- `ShiftAssignment`: {staffId, date, shift}
+- `ShiftAssignment`: {staffId, date, shift, isLocked?}
 - `Schedule`: {id, name, startDate, assignments[]}
 - `SoftConstraintConfig`: Per-constraint `{enabled, maxDays?, minBlockSize?, maxOff?}`
 
 **API Types** (`src/types/api.ts`):
-- `GenerateRequest/Response`: Schedule generation API
+- `GenerateRequest`: {staff, startDate, constraints, previousPeriodEnd?, lockedAssignments?}
+- `GenerateResponse`: {success, schedule?, error?}
 - `FeasibilityCheckRequest/Response`: Pre-generation feasibility check
 - `ApiError`: {code: `INFEASIBLE` | `TIMEOUT` | `INVALID_INPUT`, message}
 
@@ -148,6 +153,14 @@ Frontend uses JavaScript `getDay()` (0=Sunday), Backend uses Python `weekday()` 
 - `types.py`: `PenaltyTerm` dataclass, `SoftConstraint` protocol
 - `objective_builder.py`: `ObjectiveBuilder` with `TIER_SCALES = {1: 1000, 2: 100, 3: 10}`
 - `__init__.py`: `SOFT_CONSTRAINT_CLASSES` registry, `create_constraint(id, config)` factory
+- **Boundary Pattern**: All soft constraints support 7-day previous period via `context["previous_period_end"]`
+
+**Backend Soft Constraint Context** (passed to `build(model, context)`):
+- `shifts`: CP-SAT decision variables `{(s, d, sh): BoolVar}`
+- `indices`: `{D: 0, E: 1, N: 2, OFF: 3}`
+- `num_staff`, `num_days`, `start_date`, `config`
+- `staff_list`: `[{id, name, juhuDay}]`
+- `previous_period_end`: `[{staffId, date, shift}]` (up to 7 days)
 
 **Local development**:
 ```bash
@@ -203,3 +216,10 @@ source .venv/bin/activate && chalice local
   4. Register in `src/constraints/index.ts`
   5. Backend: Create `../api/chalicelib/soft_constraints/{snake_case}.py` implementing `SoftConstraint` protocol
   6. Register in `soft_constraints/__init__.py`
+- When adding **boundary-aware** soft constraint (considers previous period):
+  1. Frontend: Use Map-based lookup with `_count_trailing_*` or similar helper
+  2. Backend: Extract `previous_period_end` from context, build `shift_by_date` Map
+  3. Handle two boundary cases:
+     - Case A: Day 0 triggered by previous period (e.g., prev trailing work + day 0 exceeds limit)
+     - Case B: Prev day -1 was isolated (confirm at day 0 whether pattern completes)
+  4. Use `_get_prev_boundary_shifts()` or `_get_prev_day_shift()` helper pattern

@@ -27,22 +27,20 @@ const SHIFT_CONFIG: Record<ShiftType, { bg: string; text: string; label: string 
   OFF: { bg: 'bg-slate-100', text: 'text-slate-600', label: 'OFF' },
 };
 
-const SHIFTS: ShiftType[] = ['D', 'E', 'N', 'OFF'];
-
 export function PreviousPeriodInput({
   staff,
   previousPeriodEnd,
   onPreviousPeriodChange,
   startDate,
 }: PreviousPeriodInputProps) {
-  // Calculate the 3 days before period start
+  // Calculate the 7 days before period start
   const previousDates = useMemo(() => {
     const start = parseISO(startDate);
-    return [
-      { date: subDays(start, 3), dateString: format(subDays(start, 3), 'yyyy-MM-dd') },
-      { date: subDays(start, 2), dateString: format(subDays(start, 2), 'yyyy-MM-dd') },
-      { date: subDays(start, 1), dateString: format(subDays(start, 1), 'yyyy-MM-dd') },
-    ];
+    return Array.from({ length: 7 }, (_, i) => {
+      const daysBack = 7 - i; // 7, 6, 5, 4, 3, 2, 1
+      const date = subDays(start, daysBack);
+      return { date, dateString: format(date, 'yyyy-MM-dd') };
+    });
   }, [startDate]);
 
   // Build assignment lookup map
@@ -54,19 +52,31 @@ export function PreviousPeriodInput({
     return map;
   }, [previousPeriodEnd]);
 
-  const handleShiftChange = (staffId: string, date: string, shift: ShiftType) => {
-    const existingIndex = previousPeriodEnd.findIndex(
-      (a) => a.staffId === staffId && a.date === date
-    );
+  // Cycle through shifts: null → D → E → N → OFF → null
+  const cycleShift = (staffId: string, date: string) => {
+    const currentShift = getShift(staffId, date);
+    const cycleOrder: (ShiftType | null)[] = [null, 'D', 'E', 'N', 'OFF'];
+    const currentIndex = cycleOrder.indexOf(currentShift);
+    const nextIndex = (currentIndex + 1) % cycleOrder.length;
+    const nextShift = cycleOrder[nextIndex];
 
-    let newAssignments: ShiftAssignment[];
-    if (existingIndex >= 0) {
-      newAssignments = [...previousPeriodEnd];
-      newAssignments[existingIndex] = { staffId, date, shift };
+    if (nextShift === null) {
+      // Remove assignment
+      onPreviousPeriodChange(
+        previousPeriodEnd.filter((a) => !(a.staffId === staffId && a.date === date))
+      );
     } else {
-      newAssignments = [...previousPeriodEnd, { staffId, date, shift }];
+      const existingIndex = previousPeriodEnd.findIndex(
+        (a) => a.staffId === staffId && a.date === date
+      );
+      if (existingIndex >= 0) {
+        const newAssignments = [...previousPeriodEnd];
+        newAssignments[existingIndex] = { staffId, date, shift: nextShift };
+        onPreviousPeriodChange(newAssignments);
+      } else {
+        onPreviousPeriodChange([...previousPeriodEnd, { staffId, date, shift: nextShift }]);
+      }
     }
-    onPreviousPeriodChange(newAssignments);
   };
 
   const getShift = (staffId: string, date: string): ShiftType | null => {
@@ -82,11 +92,11 @@ export function PreviousPeriodInput({
       <DialogTrigger asChild>
         <Button variant="outline">이전 기간 입력</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>이전 기간 근무 입력</DialogTitle>
           <DialogDescription>
-            기간 시작 전 3일간의 근무를 입력하세요. 연속 나이트, N-OFF-D 패턴 검사에 사용됩니다.
+            기간 시작 전 7일간의 근무를 입력하세요. 클릭하여 순환 (D→E→N→OFF→빈값).
           </DialogDescription>
         </DialogHeader>
         <div className="overflow-x-auto">
@@ -114,34 +124,24 @@ export function PreviousPeriodInput({
                   </td>
                   {previousDates.map(({ dateString }) => {
                     const currentShift = getShift(staffMember.id, dateString);
+                    const config = currentShift ? SHIFT_CONFIG[currentShift] : null;
                     return (
                       <td
                         key={dateString}
                         className="p-1 border border-gray-200"
                       >
-                        <div className="flex gap-1 justify-center">
-                          {SHIFTS.map((shift) => {
-                            const config = SHIFT_CONFIG[shift];
-                            const isSelected = currentShift === shift;
-                            return (
-                              <button
-                                key={shift}
-                                type="button"
-                                onClick={() =>
-                                  handleShiftChange(staffMember.id, dateString, shift)
-                                }
-                                className={cn(
-                                  'px-2 py-1 text-xs font-medium rounded transition-all',
-                                  isSelected
-                                    ? `${config.bg} ${config.text} ring-2 ring-primary`
-                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                )}
-                              >
-                                {config.label}
-                              </button>
-                            );
-                          })}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => cycleShift(staffMember.id, dateString)}
+                          className={cn(
+                            'w-full h-8 text-xs font-medium rounded transition-all',
+                            config
+                              ? `${config.bg} ${config.text}`
+                              : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                          )}
+                        >
+                          {config?.label ?? '-'}
+                        </button>
                       </td>
                     );
                   })}

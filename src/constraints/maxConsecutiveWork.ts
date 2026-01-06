@@ -104,6 +104,7 @@ export const maxConsecutiveWorkConstraint: Constraint = {
 
 /**
  * Count how many consecutive work days end at the day before periodStartDate
+ * Uses Map for O(1) lookup - more robust than array iteration
  */
 function countTrailingWorkDays(
   previousAssignments: ShiftAssignment[],
@@ -111,20 +112,29 @@ function countTrailingWorkDays(
   periodStartDate: string
 ): number {
   const startDate = parseISO(periodStartDate);
-  const staffAssignments = previousAssignments
-    .filter((a) => a.staffId === staffId)
-    .sort((a, b) => b.date.localeCompare(a.date)); // Sort descending
+
+  // Build a Map for O(1) lookup by date
+  const shiftByDate = new Map<string, string>();
+  for (const a of previousAssignments) {
+    if (a.staffId === staffId) {
+      shiftByDate.set(a.date, a.shift);
+    }
+  }
 
   let count = 0;
-  let expectedDate = addDays(startDate, -1);
+  let checkDate = addDays(startDate, -1);
 
-  for (const assignment of staffAssignments) {
-    const assignmentDate = format(expectedDate, 'yyyy-MM-dd');
-    if (assignment.date === assignmentDate && assignment.shift !== 'OFF') {
+  // Check up to 7 days back (max previous period length)
+  for (let i = 0; i < 7; i++) {
+    const dateString = format(checkDate, 'yyyy-MM-dd');
+    const shift = shiftByDate.get(dateString);
+
+    if (shift && shift !== 'OFF') {
       count++;
-      expectedDate = addDays(expectedDate, -1);
-    } else if (assignment.date === assignmentDate) {
-      break; // Found an OFF day
+      checkDate = addDays(checkDate, -1);
+    } else {
+      // Either OFF, unassigned, or no data - stop counting
+      break;
     }
   }
 
@@ -133,6 +143,7 @@ function countTrailingWorkDays(
 
 /**
  * Find the start date of consecutive work days ending at periodStartDate
+ * Uses Map for O(1) lookup - more robust than array iteration
  */
 function findConsecutiveWorkStart(
   previousAssignments: ShiftAssignment[],
@@ -140,19 +151,27 @@ function findConsecutiveWorkStart(
   periodStartDate: string
 ): string | null {
   const startDate = parseISO(periodStartDate);
-  const staffAssignments = previousAssignments
-    .filter((a) => a.staffId === staffId)
-    .sort((a, b) => b.date.localeCompare(a.date)); // Sort descending
+
+  // Build a Map for O(1) lookup by date
+  const shiftByDate = new Map<string, string>();
+  for (const a of previousAssignments) {
+    if (a.staffId === staffId) {
+      shiftByDate.set(a.date, a.shift);
+    }
+  }
 
   let lastWorkDate: string | null = null;
-  let expectedDate = addDays(startDate, -1);
+  let checkDate = addDays(startDate, -1);
 
-  for (const assignment of staffAssignments) {
-    const assignmentDate = format(expectedDate, 'yyyy-MM-dd');
-    if (assignment.date === assignmentDate && assignment.shift !== 'OFF') {
-      lastWorkDate = assignmentDate;
-      expectedDate = addDays(expectedDate, -1);
-    } else if (assignment.date === assignmentDate) {
+  // Check up to 7 days back (max previous period length)
+  for (let i = 0; i < 7; i++) {
+    const dateString = format(checkDate, 'yyyy-MM-dd');
+    const shift = shiftByDate.get(dateString);
+
+    if (shift && shift !== 'OFF') {
+      lastWorkDate = dateString;
+      checkDate = addDays(checkDate, -1);
+    } else {
       break;
     }
   }
