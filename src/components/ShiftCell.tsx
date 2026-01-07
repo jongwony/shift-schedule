@@ -25,11 +25,11 @@ const IMPACT_STYLES: Record<ImpactReason, { bg: string; label: string }> = {
   sequence: { bg: 'bg-orange-50', label: '연속 근무 규칙 영향' },
 };
 
-const SHIFT_CONFIG: Record<ShiftType, { bg: string; hover: string; text: string; icon: string; label: string }> = {
-  D: { bg: 'bg-amber-100', hover: 'hover:bg-amber-200', text: 'text-amber-800', icon: '\u2600', label: '데이' },
-  E: { bg: 'bg-blue-100', hover: 'hover:bg-blue-200', text: 'text-blue-800', icon: '\u263D', label: '이브닝' },
-  N: { bg: 'bg-indigo-100', hover: 'hover:bg-indigo-200', text: 'text-indigo-800', icon: '\u2605', label: '나이트' },
-  OFF: { bg: 'bg-slate-100', hover: 'hover:bg-slate-200', text: 'text-slate-600', icon: '\u2014', label: '휴무' },
+const SHIFT_CONFIG: Record<ShiftType, { bg: string; hover: string; text: string; label: string }> = {
+  D: { bg: 'bg-amber-100', hover: 'hover:bg-amber-200', text: 'text-amber-800', label: '데이' },
+  E: { bg: 'bg-blue-100', hover: 'hover:bg-blue-200', text: 'text-blue-800', label: '이브닝' },
+  N: { bg: 'bg-indigo-100', hover: 'hover:bg-indigo-200', text: 'text-indigo-800', label: '나이트' },
+  OFF: { bg: 'bg-slate-100', hover: 'hover:bg-slate-200', text: 'text-slate-600', label: '휴무' },
 };
 
 const SHIFT_CYCLE: (ShiftType | null)[] = [null, 'D', 'E', 'N', 'OFF'];
@@ -147,15 +147,10 @@ export function ShiftCell({
           isAffected && impactStyle && !hasError && !hasWarning ? impactStyle.bg : config ? config.bg : 'bg-gray-50 hover:bg-gray-100',
           config ? config.hover : '',
           config ? config.text : 'text-gray-400',
-          // Affected state: dashed border
-          isAffected && !hasError && !hasWarning && 'border-dashed border-2',
           // Error/warning states (override affected)
           hasError && 'bg-red-100 border-red-400 ring-2 ring-red-500 hover:bg-red-200',
           hasWarning && !hasError && 'border-yellow-400 ring-2 ring-yellow-500 hover:bg-yellow-100',
           !hasError && !hasWarning && !isAffected && !isLocked && 'border-gray-200 hover:border-gray-300',
-          // Affected border colors by reason
-          isAffected && !hasError && !hasWarning && affectReason === 'staffing' && 'border-blue-400',
-          isAffected && !hasError && !hasWarning && affectReason === 'sequence' && 'border-orange-400',
           // Locked state
           isLocked && !hasError && !hasWarning && 'ring-2 ring-green-500 border-green-400',
           // Pressing feedback (for long-press)
@@ -163,10 +158,7 @@ export function ShiftCell({
         )}
       >
         {config ? (
-          <span className="flex items-center gap-0.5" aria-hidden="true">
-            <span>{config.icon}</span>
-            <span>{shift}</span>
-          </span>
+          <span aria-hidden="true">{shift}</span>
         ) : (
           <span className="text-gray-300" aria-hidden="true">-</span>
         )}
