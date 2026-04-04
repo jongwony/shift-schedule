@@ -15,6 +15,7 @@ export interface Schedule {
   startDate: string;
   assignments: ShiftAssignment[];
   staffJuhuDays?: Array<{ staffId: string; juhuDay: DayOfWeek }>;
+  holidays?: string[];
 }
 
 export interface PreviousPeriodData {

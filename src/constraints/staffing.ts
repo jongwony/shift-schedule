@@ -1,7 +1,8 @@
-import { parseISO, addDays, format, isWeekend } from 'date-fns';
+import { parseISO, addDays, format } from 'date-fns';
 import type { Violation } from '@/types';
 import type { Constraint, ConstraintContext } from './types';
 import { getSeverityFromConfig } from './types';
+import { isWeekendOrHoliday } from '@/utils/dateUtils';
 
 const SHIFT_TYPE_NAMES: Record<'D' | 'E' | 'N', string> = {
   D: '데이',
@@ -31,13 +32,14 @@ export const staffingConstraint: Constraint = {
 
     const startDate = parseISO(schedule.startDate);
     const periodDays = 28;
+    const holidays = schedule.holidays ?? [];
 
     for (let i = 0; i < periodDays; i++) {
       const currentDateObj = addDays(startDate, i);
       const currentDate = format(currentDateObj, 'yyyy-MM-dd');
-      const weekend = isWeekend(currentDateObj);
+      const isWeekendOrHolidayDate = isWeekendOrHoliday(currentDateObj, holidays);
 
-      const staffingReq = weekend ? config.weekendStaffing : config.weekdayStaffing;
+      const staffingReq = isWeekendOrHolidayDate ? config.weekendStaffing : config.weekdayStaffing;
 
       // Count staff per shift type for this date
       const shiftCounts: Record<'D' | 'E' | 'N', number> = { D: 0, E: 0, N: 0 };

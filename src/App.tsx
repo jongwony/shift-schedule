@@ -28,6 +28,7 @@ function App() {
     removeStaff,
     updateAssignment,
     toggleLock,
+    toggleHoliday,
     setStartDate,
     setPreviousPeriodEnd,
     generateAutoSchedule,
@@ -212,6 +213,7 @@ function App() {
                     affectedCells={affectedCells}
                     onAssignmentChange={updateAssignment}
                     onToggleLock={toggleLock}
+                    onToggleHoliday={toggleHoliday}
                     onEditingCellChange={setEditingCell}
                     onHoverCellChange={setHoveredCell}
                   />

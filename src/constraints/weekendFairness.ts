@@ -1,6 +1,7 @@
-import { parseISO, addDays, format, getDay } from 'date-fns';
+import { parseISO, addDays, format } from 'date-fns';
 import type { Violation, ShiftAssignment } from '@/types';
 import type { Constraint, ConstraintContext } from './types';
+import { isWeekendOrHoliday } from '@/utils/dateUtils';
 
 function getShiftForStaffOnDate(
   assignments: ShiftAssignment[],
@@ -11,11 +12,6 @@ function getShiftForStaffOnDate(
     (a) => a.staffId === staffId && a.date === date
   );
   return assignment?.shift ?? null;
-}
-
-function isWeekend(date: Date): boolean {
-  const day = getDay(date);
-  return day === 0 || day === 6; // Sunday or Saturday
 }
 
 export const weekendFairnessConstraint: Constraint = {
@@ -35,8 +31,9 @@ export const weekendFairnessConstraint: Constraint = {
 
     const startDate = parseISO(schedule.startDate);
     const periodDays = 28;
+    const holidays = schedule.holidays ?? [];
 
-    // Count weekend work days for each staff member
+    // Count weekend/holiday work days for each staff member
     const weekendWorkCounts: Map<string, number> = new Map();
 
     for (const staffMember of staff) {
@@ -46,7 +43,7 @@ export const weekendFairnessConstraint: Constraint = {
         const currentDate = addDays(startDate, i);
         const currentDateStr = format(currentDate, 'yyyy-MM-dd');
 
-        if (!isWeekend(currentDate)) {
+        if (!isWeekendOrHoliday(currentDate, holidays)) {
           continue;
         }
 

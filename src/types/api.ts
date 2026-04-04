@@ -31,6 +31,7 @@ export interface GenerateRequest {
   };
   previousPeriodEnd?: ShiftAssignment[];
   lockedAssignments?: ShiftAssignment[];
+  holidays?: string[];
 }
 
 export interface GenerateResponse {
@@ -51,6 +52,7 @@ export interface FeasibilityCheckRequest {
     weekendStaffing: DailyStaffing;
     constraintSeverity?: ApiConstraintSeverity;
   };
+  holidays?: string[];
 }
 
 export interface FeasibilityCheckResponse {

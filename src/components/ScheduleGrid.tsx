@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { addDays, parseISO, format } from 'date-fns';
 import type { Schedule, Staff, Violation, ShiftType, ShiftAssignment } from '@/types';
-import { formatDateKorean, isWeekend } from '@/utils/dateUtils';
+import { formatDateKorean, isWeekend, isHoliday } from '@/utils/dateUtils';
 import { DAY_NAMES } from '@/utils/dayUtils';
 import { countShiftsByType, countStaffByShiftPerDate } from '@/utils/shiftUtils';
 import { getCellKey, type ImpactReason } from '@/utils/impactCalculator';
@@ -15,6 +15,7 @@ interface ScheduleGridProps {
   affectedCells: Map<string, ImpactReason>;
   onAssignmentChange: (staffId: string, date: string, shift: ShiftType) => void;
   onToggleLock?: (staffId: string, date: string) => void;
+  onToggleHoliday?: (date: string) => void;
   onEditingCellChange?: (cell: { staffId: string; date: string } | null) => void;
   onHoverCellChange?: (cell: { staffId: string; date: string } | null) => void;
 }
@@ -26,9 +27,11 @@ export function ScheduleGrid({
   affectedCells,
   onAssignmentChange,
   onToggleLock,
+  onToggleHoliday,
   onEditingCellChange,
   onHoverCellChange,
 }: ScheduleGridProps) {
+  const holidays = schedule.holidays ?? [];
   // Generate 28 dates from schedule.startDate
   const dates = useMemo(() => {
     const result: { date: Date; dateString: string }[] = [];
@@ -123,18 +126,28 @@ export function ScheduleGrid({
             >
               직원
             </th>
-            {dates.map(({ date, dateString }) => (
-              <th
-                key={dateString}
-                scope="col"
-                className={cn(
-                  'p-2 border-b border-gray-200 text-center text-xs font-medium whitespace-nowrap',
-                  isWeekend(date) ? 'bg-slate-200 text-slate-700' : 'bg-gray-50 text-gray-600'
-                )}
-              >
-                {formatDateKorean(date)}
-              </th>
-            ))}
+            {dates.map(({ date, dateString }) => {
+              const isDateHoliday = isHoliday(date, holidays);
+              const isDateWeekend = isWeekend(date);
+              return (
+                <th
+                  key={dateString}
+                  scope="col"
+                  className={cn(
+                    'p-2 border-b border-gray-200 text-center text-xs font-medium whitespace-nowrap cursor-pointer select-none hover:opacity-80 transition-opacity',
+                    isDateHoliday
+                      ? 'bg-rose-200 text-rose-700'
+                      : isDateWeekend
+                        ? 'bg-slate-200 text-slate-700'
+                        : 'bg-gray-50 text-gray-600'
+                  )}
+                  onClick={() => onToggleHoliday?.(dateString)}
+                  title={isDateHoliday ? '클릭하여 공휴일 해제' : '클릭하여 공휴일 지정'}
+                >
+                  {formatDateKorean(date)}{isDateHoliday && '*'}
+                </th>
+              );
+            })}
             {/* Summary columns - sticky right */}
             <th
               scope="col"
@@ -188,12 +201,16 @@ export function ScheduleGrid({
                   const assignment = assignmentMap.get(key);
                   const cellViolations = violationMap.get(key) || [];
                   const affectReason = affectedCells.get(key);
+                  const isDateHoliday = isHoliday(date, holidays);
+                  const isDateWeekend = isWeekend(date);
                   return (
                     <td
                       key={dateString}
                       className={cn(
                         'p-1 border-b border-gray-200',
-                        isWeekend(date) && 'bg-slate-100',
+                        isDateHoliday
+                          ? 'bg-rose-50'
+                          : isDateWeekend && 'bg-slate-100',
                         isLastRow && 'border-b-0'
                       )}
                     >
@@ -264,12 +281,16 @@ export function ScheduleGrid({
             </td>
             {dates.map(({ date, dateString }) => {
               const counts = perDateCounts.get(dateString);
+              const isDateHoliday = isHoliday(date, holidays);
+              const isDateWeekend = isWeekend(date);
               return (
                 <td
                   key={dateString}
                   className={cn(
                     'p-2 border-t border-gray-200 text-center text-sm font-medium text-amber-600',
-                    isWeekend(date) && 'bg-amber-200/70'
+                    isDateHoliday
+                      ? 'bg-rose-100'
+                      : isDateWeekend && 'bg-amber-200/70'
                   )}
                 >
                   {counts?.D ?? 0}
@@ -288,12 +309,16 @@ export function ScheduleGrid({
             </td>
             {dates.map(({ date, dateString }) => {
               const counts = perDateCounts.get(dateString);
+              const isDateHoliday = isHoliday(date, holidays);
+              const isDateWeekend = isWeekend(date);
               return (
                 <td
                   key={dateString}
                   className={cn(
                     'p-2 text-center text-sm font-medium text-blue-600',
-                    isWeekend(date) && 'bg-blue-200/70'
+                    isDateHoliday
+                      ? 'bg-rose-100'
+                      : isDateWeekend && 'bg-blue-200/70'
                   )}
                 >
                   {counts?.E ?? 0}
@@ -312,12 +337,16 @@ export function ScheduleGrid({
             </td>
             {dates.map(({ date, dateString }) => {
               const counts = perDateCounts.get(dateString);
+              const isDateHoliday = isHoliday(date, holidays);
+              const isDateWeekend = isWeekend(date);
               return (
                 <td
                   key={dateString}
                   className={cn(
                     'p-2 text-center text-sm font-medium text-purple-600',
-                    isWeekend(date) && 'bg-purple-200/70'
+                    isDateHoliday
+                      ? 'bg-rose-100'
+                      : isDateWeekend && 'bg-purple-200/70'
                   )}
                 >
                   {counts?.N ?? 0}

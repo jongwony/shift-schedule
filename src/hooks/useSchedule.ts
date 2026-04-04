@@ -311,9 +311,25 @@ export function useSchedule() {
       startDate: date,
       // Clear assignments when period changes
       assignments: [],
+      // Clear holidays when period changes
+      holidays: [],
     }));
     setPreviousPeriodEnd([]);
   }, [setSchedule, setPreviousPeriodEnd]);
+
+  const toggleHoliday = useCallback((date: string) => {
+    setSchedule((prev) => {
+      const holidays = prev.holidays ?? [];
+      const isCurrentlyHoliday = holidays.includes(date);
+
+      return {
+        ...prev,
+        holidays: isCurrentlyHoliday
+          ? holidays.filter((h) => h !== date)
+          : [...holidays, date],
+      };
+    });
+  }, [setSchedule]);
 
   const clearSchedule = useCallback(() => {
     setSchedule((prev) => ({
@@ -353,6 +369,7 @@ export function useSchedule() {
         constraintSeverity: config.constraintSeverity,
         softConstraints: config.softConstraints,
       },
+      holidays: schedule.holidays,
     };
 
     try {
@@ -476,6 +493,7 @@ export function useSchedule() {
     // Schedule actions
     updateAssignment,
     toggleLock,
+    toggleHoliday,
     setStartDate,
     clearSchedule,
     setPreviousPeriodEnd,

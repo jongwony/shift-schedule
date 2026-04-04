@@ -50,3 +50,18 @@ export function forEachDateInRange(
 export function isWeekend(date: Date): boolean {
   return dateFnsIsWeekend(date);
 }
+
+/**
+ * Check if a date is a holiday.
+ */
+export function isHoliday(date: Date, holidays: string[]): boolean {
+  const dateString = format(date, 'yyyy-MM-dd');
+  return holidays.includes(dateString);
+}
+
+/**
+ * Check if a date falls on a weekend or is a holiday.
+ */
+export function isWeekendOrHoliday(date: Date, holidays: string[] = []): boolean {
+  return dateFnsIsWeekend(date) || isHoliday(date, holidays);
+}
