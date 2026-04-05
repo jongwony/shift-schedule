@@ -104,141 +104,92 @@ export function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">평일 최소인원</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-lg">주차별 최소인원</CardTitle>
+          <button
+            type="button"
+            onClick={() => {
+              updateConfig({
+                weeklyStaffing: Array.from({ length: 4 }, () =>
+                  structuredClone(config.weeklyStaffing[0])
+                ),
+              });
+            }}
+            className="text-xs px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+          >
+            1주차 기준 일괄 적용
+          </button>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="weekday-day">데이 (D)</Label>
-              <Input
-                id="weekday-day"
-                type="number"
-                min={0}
-                value={config.weekdayStaffing.day.min}
-                onChange={(e) =>
-                  updateConfig({
-                    weekdayStaffing: {
-                      ...config.weekdayStaffing,
-                      day: {
-                        ...config.weekdayStaffing.day,
-                        min: Number(e.target.value),
-                      },
-                    },
-                  })
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor="weekday-evening">이브닝 (E)</Label>
-              <Input
-                id="weekday-evening"
-                type="number"
-                min={0}
-                value={config.weekdayStaffing.evening.min}
-                onChange={(e) =>
-                  updateConfig({
-                    weekdayStaffing: {
-                      ...config.weekdayStaffing,
-                      evening: {
-                        ...config.weekdayStaffing.evening,
-                        min: Number(e.target.value),
-                      },
-                    },
-                  })
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor="weekday-night">나이트 (N)</Label>
-              <Input
-                id="weekday-night"
-                type="number"
-                min={0}
-                value={config.weekdayStaffing.night.min}
-                onChange={(e) =>
-                  updateConfig({
-                    weekdayStaffing: {
-                      ...config.weekdayStaffing,
-                      night: {
-                        ...config.weekdayStaffing.night,
-                        min: Number(e.target.value),
-                      },
-                    },
-                  })
-                }
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">주말 최소인원</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="weekend-day">데이 (D)</Label>
-              <Input
-                id="weekend-day"
-                type="number"
-                min={0}
-                value={config.weekendStaffing.day.min}
-                onChange={(e) =>
-                  updateConfig({
-                    weekendStaffing: {
-                      ...config.weekendStaffing,
-                      day: {
-                        ...config.weekendStaffing.day,
-                        min: Number(e.target.value),
-                      },
-                    },
-                  })
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor="weekend-evening">이브닝 (E)</Label>
-              <Input
-                id="weekend-evening"
-                type="number"
-                min={0}
-                value={config.weekendStaffing.evening.min}
-                onChange={(e) =>
-                  updateConfig({
-                    weekendStaffing: {
-                      ...config.weekendStaffing,
-                      evening: {
-                        ...config.weekendStaffing.evening,
-                        min: Number(e.target.value),
-                      },
-                    },
-                  })
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor="weekend-night">나이트 (N)</Label>
-              <Input
-                id="weekend-night"
-                type="number"
-                min={0}
-                value={config.weekendStaffing.night.min}
-                onChange={(e) =>
-                  updateConfig({
-                    weekendStaffing: {
-                      ...config.weekendStaffing,
-                      night: {
-                        ...config.weekendStaffing.night,
-                        min: Number(e.target.value),
-                      },
-                    },
-                  })
-                }
-              />
-            </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="text-left py-2 pr-2 min-w-[3rem]" />
+                  {[1, 2, 3, 4].map((week) => (
+                    <th
+                      key={week}
+                      colSpan={3}
+                      className="text-center py-2 px-1 font-medium border-l border-gray-100 first:border-l-0"
+                    >
+                      {week}주차
+                    </th>
+                  ))}
+                </tr>
+                <tr>
+                  <th className="text-left py-1 pr-2" />
+                  {[0, 1, 2, 3].flatMap((week) =>
+                    ['D', 'E', 'N'].map((shift) => (
+                      <th
+                        key={`${week}-${shift}`}
+                        className="text-center py-1 px-1 text-xs text-muted-foreground font-normal"
+                      >
+                        {shift}
+                      </th>
+                    ))
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {(['weekday', 'weekend'] as const).map((dayType) => (
+                  <tr key={dayType} className="border-t border-gray-100">
+                    <td className="py-2 pr-2 font-medium text-sm whitespace-nowrap">
+                      {dayType === 'weekday' ? '평일' : '주말'}
+                    </td>
+                    {config.weeklyStaffing.flatMap((weekConfig, weekIndex) =>
+                      (['day', 'evening', 'night'] as const).map((shiftKey) => (
+                        <td key={`${weekIndex}-${shiftKey}`} className="py-1 px-1">
+                          <Input
+                            type="number"
+                            min={0}
+                            className="w-14 h-8 text-center text-sm px-1"
+                            value={weekConfig[dayType][shiftKey].min}
+                            onChange={(e) => {
+                              const newWeeklyStaffing = config.weeklyStaffing.map(
+                                (w, i) =>
+                                  i === weekIndex
+                                    ? {
+                                        ...w,
+                                        [dayType]: {
+                                          ...w[dayType],
+                                          [shiftKey]: {
+                                            ...w[dayType][shiftKey],
+                                            min: Number(e.target.value),
+                                          },
+                                        },
+                                      }
+                                    : w
+                              );
+                              updateConfig({ weeklyStaffing: newWeeklyStaffing });
+                            }}
+                          />
+                        </td>
+                      ))
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>

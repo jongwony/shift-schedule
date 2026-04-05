@@ -36,8 +36,10 @@ export const staffingConstraint: Constraint = {
       const currentDateObj = addDays(startDate, i);
       const currentDate = format(currentDateObj, 'yyyy-MM-dd');
       const weekend = isWeekend(currentDateObj);
+      const weekIndex = Math.min(Math.floor(i / 7), config.weeklyStaffing.length - 1);
+      const weekStaffing = config.weeklyStaffing[weekIndex];
 
-      const staffingReq = weekend ? config.weekendStaffing : config.weekdayStaffing;
+      const staffingReq = weekend ? weekStaffing.weekend : weekStaffing.weekday;
 
       // Count staff per shift type for this date
       const shiftCounts: Record<'D' | 'E' | 'N', number> = { D: 0, E: 0, N: 0 };

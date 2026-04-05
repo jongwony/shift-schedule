@@ -30,7 +30,7 @@ const STORAGE_KEYS = {
 } as const;
 
 // Schema version: increment when localStorage structure changes
-const CURRENT_SCHEMA_VERSION = 2;
+const CURRENT_SCHEMA_VERSION = 3;
 
 /**
  * Check and migrate localStorage schema.
@@ -44,22 +44,38 @@ function migrateStorageIfNeeded(): boolean {
   const version = storedVersion ? parseInt(storedVersion, 10) : 1;
 
   if (version < CURRENT_SCHEMA_VERSION) {
-    // Clear staff and schedule data
-    localStorage.removeItem(STORAGE_KEYS.staff);
-    localStorage.removeItem(STORAGE_KEYS.schedule);
-    localStorage.removeItem(STORAGE_KEYS.previousPeriod);
+    // v1 → v2: Clear staff and schedule data (juhuDay removed from Staff)
+    if (version < 2) {
+      localStorage.removeItem(STORAGE_KEYS.staff);
+      localStorage.removeItem(STORAGE_KEYS.schedule);
+      localStorage.removeItem(STORAGE_KEYS.previousPeriod);
+    }
 
-    // Clean up juhu-related fields from config (v1 → v2 migration)
     const storedConfig = localStorage.getItem(STORAGE_KEYS.config);
     if (storedConfig) {
       try {
         const config = JSON.parse(storedConfig);
-        if (config.constraintSeverity) {
-          delete config.constraintSeverity.juhu;
+
+        // v1 → v2: Clean up juhu-related fields
+        if (version < 2) {
+          if (config.constraintSeverity) {
+            delete config.constraintSeverity.juhu;
+          }
+          if (config.enabledConstraints) {
+            delete config.enabledConstraints.juhu;
+          }
         }
-        if (config.enabledConstraints) {
-          delete config.enabledConstraints.juhu;
+
+        // v2 → v3: weekdayStaffing/weekendStaffing → weeklyStaffing
+        if (version < 3 && config.weekdayStaffing && config.weekendStaffing && !config.weeklyStaffing) {
+          config.weeklyStaffing = Array.from({ length: 4 }, () => ({
+            weekday: config.weekdayStaffing,
+            weekend: config.weekendStaffing,
+          }));
+          delete config.weekdayStaffing;
+          delete config.weekendStaffing;
         }
+
         localStorage.setItem(STORAGE_KEYS.config, JSON.stringify(config));
       } catch {
         // If parsing fails, remove config entirely
@@ -348,8 +364,7 @@ export function useSchedule() {
         maxConsecutiveNights: config.maxConsecutiveNights,
         monthlyNightsRequired: config.monthlyNightsRequired,
         weeklyWorkHours: config.weeklyWorkHours,
-        weekdayStaffing: config.weekdayStaffing,
-        weekendStaffing: config.weekendStaffing,
+        weeklyStaffing: config.weeklyStaffing,
         constraintSeverity: config.constraintSeverity,
         softConstraints: config.softConstraints,
       },
