@@ -1,4 +1,4 @@
-import type { ShiftAssignment, DailyStaffing, DayOfWeek, ConstraintSeverity, SoftConstraintConfig } from './index';
+import type { ShiftAssignment, DayOfWeek, ConstraintSeverity, SoftConstraintConfig, WeeklyStaffing } from './index';
 
 export type GenerationStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -24,8 +24,7 @@ export interface GenerateRequest {
     maxConsecutiveNights: number;
     monthlyNightsRequired: number;
     weeklyWorkHours: number;
-    weekdayStaffing: DailyStaffing;
-    weekendStaffing: DailyStaffing;
+    weeklyStaffing: WeeklyStaffing[];
     constraintSeverity?: ApiConstraintSeverity;
     softConstraints?: SoftConstraintConfig;
   };
@@ -47,8 +46,7 @@ export interface FeasibilityCheckRequest {
     maxConsecutiveNights: number;
     monthlyNightsRequired: number;
     weeklyWorkHours: number;
-    weekdayStaffing: DailyStaffing;
-    weekendStaffing: DailyStaffing;
+    weeklyStaffing: WeeklyStaffing[];
     constraintSeverity?: ApiConstraintSeverity;
   };
 }
@@ -58,9 +56,9 @@ export interface FeasibilityCheckResponse {
   reasons: string[];
   analysis?: {
     staffCount: number;
-    weekdayMinStaff: number;
-    weekendMinStaff: number;
     offDaysRequired: number;
     weeklyWorkHours: number;
+    totalRequired: number;
+    totalAvailable: number;
   };
 }

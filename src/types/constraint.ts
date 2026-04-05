@@ -30,6 +30,11 @@ export interface DailyStaffing {
   night: StaffingRequirement;
 }
 
+export interface WeeklyStaffing {
+  weekday: DailyStaffing;
+  weekend: DailyStaffing;
+}
+
 export type ConstraintSeverity = 'hard' | 'soft';
 
 // Soft Constraint Configuration Types
@@ -74,8 +79,7 @@ export interface ConstraintConfig {
   maxConsecutiveNights: number;
   monthlyNightsRequired: number;
   weeklyWorkHours: number;
-  weekdayStaffing: DailyStaffing;
-  weekendStaffing: DailyStaffing;
+  weeklyStaffing: WeeklyStaffing[];
   enabledConstraints: {
     shiftOrder: boolean;
     nightOffDay: boolean;

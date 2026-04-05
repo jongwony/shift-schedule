@@ -180,8 +180,8 @@ export function FeasibilityResult({ result, completeness = 0, preCheckResult }: 
           {preCheckResult.analysis && (
             <div className="mt-3 text-xs text-red-600 flex flex-wrap gap-x-4 gap-y-1">
               <span>직원: {preCheckResult.analysis.staffCount}명</span>
-              <span>평일 최소: {preCheckResult.analysis.weekdayMinStaff}명</span>
-              <span>주말 최소: {preCheckResult.analysis.weekendMinStaff}명</span>
+              <span>필요: {preCheckResult.analysis.totalRequired} person-days</span>
+              <span>가용: {preCheckResult.analysis.totalAvailable} person-days</span>
               <span>주당 OFF: {preCheckResult.analysis.offDaysRequired}일</span>
             </div>
           )}

@@ -22,16 +22,18 @@ function createTestContext(
     maxConsecutiveNights: 4,
     monthlyNightsRequired: 7,
     weeklyWorkHours: 40,
-    weekdayStaffing: {
-      day: { min: 1, max: 2 },
-      evening: { min: 1, max: 2 },
-      night: { min: 1, max: 2 },
-    },
-    weekendStaffing: {
-      day: { min: 1, max: 2 },
-      evening: { min: 1, max: 2 },
-      night: { min: 1, max: 2 },
-    },
+    weeklyStaffing: Array.from({ length: 4 }, () => ({
+      weekday: {
+        day: { min: 1, max: 2 },
+        evening: { min: 1, max: 2 },
+        night: { min: 1, max: 2 },
+      },
+      weekend: {
+        day: { min: 1, max: 2 },
+        evening: { min: 1, max: 2 },
+        night: { min: 1, max: 2 },
+      },
+    })),
     enabledConstraints: {
       shiftOrder: true,
       nightOffDay: true,

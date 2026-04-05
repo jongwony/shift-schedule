@@ -11,6 +11,7 @@ export type {
   FeasibilityResult,
   StaffingRequirement,
   DailyStaffing,
+  WeeklyStaffing,
   ConstraintConfig,
   ConstraintSeverity,
   SoftConstraintItemConfig,
