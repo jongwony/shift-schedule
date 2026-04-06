@@ -26,6 +26,7 @@ function App() {
     showAllViolations,
     addStaff,
     removeStaff,
+    updateStaff,
     updateAssignment,
     toggleLock,
     setStartDate,
@@ -212,6 +213,7 @@ function App() {
                     affectedCells={affectedCells}
                     onAssignmentChange={updateAssignment}
                     onToggleLock={toggleLock}
+                    onUpdateStaff={updateStaff}
                     onEditingCellChange={setEditingCell}
                     onHoverCellChange={setHoveredCell}
                   />

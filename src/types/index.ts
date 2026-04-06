@@ -1,4 +1,4 @@
-export type { DayOfWeek, Staff } from './staff';
+export type { DayOfWeek, EligibleShift, Staff } from './staff';
 export type {
   ShiftType,
   ShiftAssignment,
