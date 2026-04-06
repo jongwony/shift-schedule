@@ -15,6 +15,8 @@ export interface Schedule {
   startDate: string;
   assignments: ShiftAssignment[];
   staffJuhuDays?: Array<{ staffId: string; juhuDay: DayOfWeek }>;
+  /** Cell-level shift exclusions. Key: getCellKey(staffId, date), Value: excluded ShiftTypes */
+  cellExclusions?: Record<string, ShiftType[]>;
 }
 
 export interface PreviousPeriodData {

@@ -29,6 +29,8 @@ function App() {
     updateStaff,
     updateAssignment,
     toggleLock,
+    toggleExclusion,
+    resetCell,
     setStartDate,
     setPreviousPeriodEnd,
     generateAutoSchedule,
@@ -213,6 +215,8 @@ function App() {
                     affectedCells={affectedCells}
                     onAssignmentChange={updateAssignment}
                     onToggleLock={toggleLock}
+                    onToggleExclusion={toggleExclusion}
+                    onResetCell={resetCell}
                     onUpdateStaff={updateStaff}
                     onEditingCellChange={setEditingCell}
                     onHoverCellChange={setHoveredCell}

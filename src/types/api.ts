@@ -31,6 +31,7 @@ export interface GenerateRequest {
   };
   previousPeriodEnd?: ShiftAssignment[];
   lockedAssignments?: ShiftAssignment[];
+  cellExclusions?: Array<{ staffId: string; date: string; excludedShifts: string[] }>;
 }
 
 export interface GenerateResponse {

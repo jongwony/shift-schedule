@@ -250,11 +250,20 @@ export function useSchedule() {
 
   const removeStaff = useCallback((staffId: string) => {
     setStaff((prev) => prev.filter((s) => s.id !== staffId));
-    // Also remove assignments for this staff
-    setSchedule((prev) => ({
-      ...prev,
-      assignments: prev.assignments.filter((a) => a.staffId !== staffId),
-    }));
+    // Also remove assignments and exclusions for this staff
+    setSchedule((prev) => {
+      const newCellExclusions = { ...(prev.cellExclusions ?? {}) };
+      for (const key of Object.keys(newCellExclusions)) {
+        if (key.startsWith(`${staffId}-`)) {
+          delete newCellExclusions[key];
+        }
+      }
+      return {
+        ...prev,
+        assignments: prev.assignments.filter((a) => a.staffId !== staffId),
+        cellExclusions: newCellExclusions,
+      };
+    });
     setPreviousPeriodEnd((prev) => prev.filter((a) => a.staffId !== staffId));
   }, [setStaff, setSchedule, setPreviousPeriodEnd]);
 
@@ -264,17 +273,34 @@ export function useSchedule() {
         prev.map((s) => (s.id === staffId ? { ...s, ...updates } : s))
       );
 
-      // Remove assignments that are no longer eligible after eligibility change
+      // Remove assignments and clean up stale exclusions after eligibility change
       if (updates.eligibleShifts) {
         const newEligible = updates.eligibleShifts;
-        setSchedule((prev) => ({
-          ...prev,
-          assignments: prev.assignments.filter((a) => {
-            if (a.staffId !== staffId) return true;
-            if (a.shift === 'OFF') return true;
-            return newEligible.includes(a.shift as typeof newEligible[number]);
-          }),
-        }));
+        setSchedule((prev) => {
+          // Clean up exclusions for shift types no longer eligible
+          const newCellExclusions = { ...(prev.cellExclusions ?? {}) };
+          for (const [key, excluded] of Object.entries(newCellExclusions)) {
+            if (key.startsWith(`${staffId}-`)) {
+              const filtered = excluded.filter(
+                (s) => s === 'OFF' || newEligible.includes(s as typeof newEligible[number])
+              );
+              if (filtered.length === 0) {
+                delete newCellExclusions[key];
+              } else {
+                newCellExclusions[key] = filtered;
+              }
+            }
+          }
+          return {
+            ...prev,
+            assignments: prev.assignments.filter((a) => {
+              if (a.staffId !== staffId) return true;
+              if (a.shift === 'OFF') return true;
+              return newEligible.includes(a.shift as typeof newEligible[number]);
+            }),
+            cellExclusions: newCellExclusions,
+          };
+        });
       }
     },
     [setStaff, setSchedule]
@@ -312,6 +338,11 @@ export function useSchedule() {
           (a) => a.staffId === staffId && a.date === date
         );
 
+        // Clear exclusions when locking (mutual exclusivity)
+        const key = `${staffId}-${date}`;
+        const newCellExclusions = { ...(prev.cellExclusions ?? {}) };
+        delete newCellExclusions[key];
+
         if (existingIndex >= 0) {
           // Toggle lock on existing assignment
           const newAssignments = [...prev.assignments];
@@ -319,7 +350,7 @@ export function useSchedule() {
             ...newAssignments[existingIndex],
             isLocked: !newAssignments[existingIndex].isLocked,
           };
-          return { ...prev, assignments: newAssignments };
+          return { ...prev, assignments: newAssignments, cellExclusions: newCellExclusions };
         } else {
           // Empty cell: create OFF assignment with lock
           return {
@@ -328,8 +359,87 @@ export function useSchedule() {
               ...prev.assignments,
               { staffId, date, shift: 'OFF' as ShiftType, isLocked: true },
             ],
+            cellExclusions: newCellExclusions,
           };
         }
+      });
+    },
+    [setSchedule]
+  );
+
+  const toggleExclusion = useCallback(
+    (staffId: string, date: string, shift: ShiftType) => {
+      const staffMember = staff.find((s) => s.id === staffId);
+      if (!staffMember) return;
+
+      const eligible = getEligibleShifts(staffMember);
+      const available: ShiftType[] = [...eligible, 'OFF'];
+      const maxExclusions = Math.min(2, available.length - 2);
+
+      setSchedule((prev) => {
+        const key = `${staffId}-${date}`;
+        const currentExclusions = prev.cellExclusions?.[key] ?? [];
+        const isExcluded = currentExclusions.includes(shift);
+
+        let newExclusions: ShiftType[];
+        if (isExcluded) {
+          newExclusions = currentExclusions.filter((s) => s !== shift);
+        } else {
+          if (currentExclusions.length >= maxExclusions) return prev;
+          newExclusions = [...currentExclusions, shift];
+        }
+
+        // Update cellExclusions map
+        const newCellExclusions = { ...(prev.cellExclusions ?? {}) };
+        if (newExclusions.length === 0) {
+          delete newCellExclusions[key];
+        } else {
+          newCellExclusions[key] = newExclusions;
+        }
+
+        // If newly excluded shift matches current assignment, remove it (→ null/unassigned)
+        let newAssignments = prev.assignments;
+        if (!isExcluded) {
+          const assignmentIdx = prev.assignments.findIndex(
+            (a) => a.staffId === staffId && a.date === date
+          );
+          if (assignmentIdx >= 0 && prev.assignments[assignmentIdx].shift === shift) {
+            // Assignment removed entirely — lock goes with it
+            newAssignments = prev.assignments.filter((_, i) => i !== assignmentIdx);
+          } else if (assignmentIdx >= 0 && prev.assignments[assignmentIdx].isLocked) {
+            // Assignment kept but clear its lock (mutual exclusivity guard)
+            newAssignments = [...prev.assignments];
+            newAssignments[assignmentIdx] = { ...newAssignments[assignmentIdx], isLocked: false };
+          }
+        }
+
+        return { ...prev, assignments: newAssignments, cellExclusions: newCellExclusions };
+      });
+    },
+    [staff, setSchedule]
+  );
+
+  const resetCell = useCallback(
+    (staffId: string, date: string) => {
+      setSchedule((prev) => {
+        const existingIndex = prev.assignments.findIndex(
+          (a) => a.staffId === staffId && a.date === date
+        );
+
+        // Set shift to OFF
+        let newAssignments: ShiftAssignment[];
+        if (existingIndex >= 0) {
+          newAssignments = [...prev.assignments];
+          newAssignments[existingIndex] = { staffId, date, shift: 'OFF' };
+        } else {
+          newAssignments = [...prev.assignments, { staffId, date, shift: 'OFF' as ShiftType }];
+        }
+
+        // Clear exclusions
+        const newCellExclusions = { ...(prev.cellExclusions ?? {}) };
+        delete newCellExclusions[`${staffId}-${date}`];
+
+        return { ...prev, assignments: newAssignments, cellExclusions: newCellExclusions };
       });
     },
     [setSchedule]
@@ -339,8 +449,9 @@ export function useSchedule() {
     setSchedule((prev) => ({
       ...prev,
       startDate: date,
-      // Clear assignments when period changes
+      // Clear assignments and exclusions when period changes
       assignments: [],
+      cellExclusions: {},
     }));
     setPreviousPeriodEnd([]);
   }, [setSchedule, setPreviousPeriodEnd]);
@@ -349,6 +460,7 @@ export function useSchedule() {
     setSchedule((prev) => ({
       ...prev,
       assignments: [],
+      cellExclusions: {},
     }));
     toast.success('근무표가 초기화되었습니다.');
   }, [setSchedule]);
@@ -400,11 +512,22 @@ export function useSchedule() {
         return;
       }
 
+      // Build cell exclusions array for API
+      const cellExclusionsList = Object.entries(schedule.cellExclusions ?? {}).map(([key, shifts]) => {
+        const separatorIdx = key.indexOf('-');
+        return {
+          staffId: key.substring(0, separatorIdx),
+          date: key.substring(separatorIdx + 1),
+          excludedShifts: shifts,
+        };
+      });
+
       // Proceed with actual generation
       const response = await generateSchedule({
         ...requestPayload,
         previousPeriodEnd: previousPeriodEnd.length > 0 ? previousPeriodEnd : undefined,
         lockedAssignments: lockedAssignments.length > 0 ? lockedAssignments : undefined,
+        cellExclusions: cellExclusionsList.length > 0 ? cellExclusionsList : undefined,
       });
 
       if (response.success && response.schedule) {
@@ -442,7 +565,7 @@ export function useSchedule() {
       const message = error instanceof Error ? error.message : '알 수 없는 오류';
       toast.error(`API 오류: ${message}`);
     }
-  }, [staff, schedule.startDate, schedule.assignments, config, previousPeriodEnd, setSchedule]);
+  }, [staff, schedule.startDate, schedule.assignments, schedule.cellExclusions, config, previousPeriodEnd, setSchedule]);
 
   // ==================== Export/Import Actions ====================
 
@@ -505,6 +628,8 @@ export function useSchedule() {
     // Schedule actions
     updateAssignment,
     toggleLock,
+    toggleExclusion,
+    resetCell,
     setStartDate,
     clearSchedule,
     setPreviousPeriodEnd,
