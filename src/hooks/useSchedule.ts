@@ -263,8 +263,21 @@ export function useSchedule() {
       setStaff((prev) =>
         prev.map((s) => (s.id === staffId ? { ...s, ...updates } : s))
       );
+
+      // Remove assignments that are no longer eligible after eligibility change
+      if (updates.eligibleShifts) {
+        const newEligible = updates.eligibleShifts;
+        setSchedule((prev) => ({
+          ...prev,
+          assignments: prev.assignments.filter((a) => {
+            if (a.staffId !== staffId) return true;
+            if (a.shift === 'OFF') return true;
+            return newEligible.includes(a.shift as typeof newEligible[number]);
+          }),
+        }));
+      }
     },
-    [setStaff]
+    [setStaff, setSchedule]
   );
 
   // ==================== Schedule Actions ====================

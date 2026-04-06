@@ -61,6 +61,8 @@ export function ShiftCell({
   // Build dynamic cycle from eligible shifts: [eligible..., 'OFF']
   const cycle: ShiftType[] = [...eligibleShifts, 'OFF'];
 
+  const isIneligible = shift !== null && shift !== 'OFF' && !eligibleShifts.includes(shift as EligibleShift);
+
   const handleClick = () => {
     if (isLocked) {
       toast.info('셀이 고정되어 있습니다. 우클릭으로 해제하세요.');
@@ -152,6 +154,8 @@ export function ShiftCell({
           !hasError && !hasWarning && !isAffected && !isLocked && 'border-gray-200 hover:border-gray-300',
           // Locked state
           isLocked && !hasError && !hasWarning && 'ring-2 ring-green-500 border-green-400',
+          // Ineligible assignment indicator
+          isIneligible && 'ring-2 ring-red-300 ring-inset border-dashed',
           // Pressing feedback (for long-press)
           isPressing && 'scale-95 opacity-70'
         )}

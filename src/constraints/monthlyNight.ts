@@ -1,5 +1,6 @@
 import type { Violation } from '@/types';
 import { countShiftsByType } from '@/utils/shiftUtils';
+import { getEligibleShifts } from '@/utils/staffUtils';
 import type { Constraint, ConstraintContext } from './types';
 import { getSeverityFromConfig } from './types';
 
@@ -17,6 +18,7 @@ export const monthlyNightConstraint: Constraint = {
     const required = config.monthlyNightsRequired;
 
     for (const staffMember of staff) {
+      if (!getEligibleShifts(staffMember).includes('N')) continue;
       const counts = countShiftsByType(schedule.assignments, staffMember.id);
       const nightCount = counts.N;
 
