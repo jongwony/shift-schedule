@@ -13,8 +13,11 @@ interface ShiftCellProps {
   affectReason?: ImpactReason;
   isLocked?: boolean;
   eligibleShifts?: EligibleShift[];
+  excludedShifts?: ShiftType[];
   onChange: (shift: ShiftType) => void;
   onToggleLock?: () => void;
+  onToggleExclusion?: (shift: ShiftType) => void;
+  onResetCell?: () => void;
   onFocus?: () => void;
   onBlur?: () => void;
   onMouseEnter?: () => void;
@@ -34,6 +37,14 @@ const SHIFT_CONFIG: Record<ShiftType, { bg: string; hover: string; text: string;
 };
 
 const ALL_ELIGIBLE: EligibleShift[] = ['D', 'E', 'N'];
+const EMPTY_EXCLUSIONS: ShiftType[] = [];
+
+const EXCLUSION_BUTTON_STYLES: Record<ShiftType, string> = {
+  D: 'bg-amber-100 text-amber-800 border-amber-300',
+  E: 'bg-blue-100 text-blue-800 border-blue-300',
+  N: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+  OFF: 'bg-slate-100 text-slate-600 border-slate-300',
+};
 
 export function ShiftCell({
   shift,
@@ -42,8 +53,11 @@ export function ShiftCell({
   affectReason,
   isLocked,
   eligibleShifts = ALL_ELIGIBLE,
+  excludedShifts = EMPTY_EXCLUSIONS,
   onChange,
   onToggleLock,
+  onToggleExclusion,
+  onResetCell,
   onFocus,
   onBlur,
   onMouseEnter,
@@ -57,9 +71,20 @@ export function ShiftCell({
   const hasWarning = violations.some((v) => v.severity === 'warning');
   const violationMessages = violations.map((v) => v.message).join('\n');
   const impactStyle = affectReason ? IMPACT_STYLES[affectReason] : null;
+  const hasExclusions = excludedShifts.length > 0;
 
-  // Build dynamic cycle from eligible shifts: [eligible..., 'OFF']
-  const cycle: ShiftType[] = [...eligibleShifts, 'OFF'];
+  // Build dynamic cycle: eligible shifts minus excluded, plus OFF if not excluded
+  const cycle: ShiftType[] = [
+    ...eligibleShifts.filter((s) => !excludedShifts.includes(s)),
+    ...(!excludedShifts.includes('OFF') ? ['OFF' as ShiftType] : []),
+  ];
+
+  // Available shifts for exclusion toggles: eligible + OFF
+  const availableForExclusion: ShiftType[] = [...eligibleShifts, 'OFF'];
+  const maxExclusions = Math.min(2, availableForExclusion.length - 2);
+
+  // Show exclusion section when cell has assignment or existing exclusions
+  const showExclusionSection = !isLocked && (shift !== null || hasExclusions) && maxExclusions > 0;
 
   const isIneligible = shift !== null && shift !== 'OFF' && !eligibleShifts.includes(shift as EligibleShift);
 
@@ -68,6 +93,7 @@ export function ShiftCell({
       toast.info('셀이 고정되어 있습니다. 우클릭으로 해제하세요.');
       return;
     }
+    if (cycle.length === 0) return;
     const currentIndex = shift !== null ? cycle.indexOf(shift) : -1;
     const nextIndex = (currentIndex + 1) % cycle.length;
     onChange(cycle[nextIndex]);
@@ -86,7 +112,7 @@ export function ShiftCell({
 
   const handleReset = () => {
     if (!isLocked) {
-      onChange('OFF');
+      onResetCell?.();
     }
     setShowContextMenu(false);
   };
@@ -109,11 +135,14 @@ export function ShiftCell({
 
   const config = shift ? SHIFT_CONFIG[shift] : null;
   const ariaLabel = config
-    ? `${config.label} (${shift})${violations.length > 0 ? `, ${violations.length}개 위반` : ''}${isAffected && impactStyle ? `, ${impactStyle.label}` : ''}`
-    : '근무 미배정, 클릭하여 배정';
+    ? `${config.label} (${shift})${violations.length > 0 ? `, ${violations.length}개 위반` : ''}${isAffected && impactStyle ? `, ${impactStyle.label}` : ''}${hasExclusions ? `, ${excludedShifts.join(',')} 배제` : ''}`
+    : `근무 미배정${hasExclusions ? `, ${excludedShifts.join(',')} 배제` : ''}, 클릭하여 배정`;
 
   // Build title with all relevant info
   const titleParts: string[] = [];
+  if (hasExclusions) {
+    titleParts.push(`배제: ${excludedShifts.join(', ')}`);
+  }
   if (isAffected && impactStyle) {
     titleParts.push(impactStyle.label);
   }
@@ -151,9 +180,11 @@ export function ShiftCell({
           // Error/warning states (override affected)
           hasError && 'bg-red-100 border-red-400 ring-2 ring-red-500 hover:bg-red-200',
           hasWarning && !hasError && 'border-yellow-400 ring-2 ring-yellow-500 hover:bg-yellow-100',
-          !hasError && !hasWarning && !isAffected && !isLocked && 'border-gray-200 hover:border-gray-300',
+          !hasError && !hasWarning && !isAffected && !isLocked && !hasExclusions && 'border-gray-200 hover:border-gray-300',
           // Locked state
           isLocked && !hasError && !hasWarning && 'ring-2 ring-green-500 border-green-400',
+          // Excluded state
+          hasExclusions && !isLocked && !hasError && !hasWarning && 'ring-2 ring-red-400 border-red-300',
           // Ineligible assignment indicator
           isIneligible && 'ring-2 ring-red-300 ring-inset border-dashed',
           // Pressing feedback (for long-press)
@@ -171,6 +202,12 @@ export function ShiftCell({
             🔒
           </span>
         )}
+        {/* Exclusion indicator */}
+        {hasExclusions && !isLocked && (
+          <span className="absolute -top-1 -right-1 text-[10px] leading-none" aria-label={`${excludedShifts.join(',')} 배제됨`}>
+            ❌
+          </span>
+        )}
       </button>
 
       {/* Context Menu */}
@@ -179,6 +216,44 @@ export function ShiftCell({
           <ContextMenuItem onClick={handleToggleLock}>
             {isLocked ? '🔓 고정 해제' : '🔒 고정'}
           </ContextMenuItem>
+          {showExclusionSection && (
+            <>
+              <div className="px-3 py-1.5 text-xs font-medium text-gray-500 border-t border-gray-100">
+                배제
+              </div>
+              <div className="flex gap-1 px-3 py-1.5">
+                {availableForExclusion.map((shiftType) => {
+                  const isExcluded = excludedShifts.includes(shiftType);
+                  const canToggle = isExcluded || excludedShifts.length < maxExclusions;
+                  return (
+                    <button
+                      key={shiftType}
+                      type="button"
+                      onClick={() => onToggleExclusion?.(shiftType)}
+                      disabled={!canToggle}
+                      aria-pressed={isExcluded}
+                      title={
+                        isExcluded
+                          ? `${shiftType} 배제 해제`
+                          : canToggle
+                            ? `${shiftType} 배제`
+                            : `최대 ${maxExclusions}개까지 배제 가능`
+                      }
+                      className={cn(
+                        'w-8 h-7 rounded border text-xs font-semibold transition-colors',
+                        isExcluded
+                          ? `${EXCLUSION_BUTTON_STYLES[shiftType]} line-through opacity-60`
+                          : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100',
+                        !canToggle && !isExcluded && 'opacity-30 cursor-not-allowed'
+                      )}
+                    >
+                      {shiftType}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
           <ContextMenuItem onClick={handleReset}>
             ↺ 초기화
           </ContextMenuItem>

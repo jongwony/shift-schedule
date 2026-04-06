@@ -17,6 +17,8 @@ interface ScheduleGridProps {
   affectedCells: Map<string, ImpactReason>;
   onAssignmentChange: (staffId: string, date: string, shift: ShiftType) => void;
   onToggleLock?: (staffId: string, date: string) => void;
+  onToggleExclusion?: (staffId: string, date: string, shift: ShiftType) => void;
+  onResetCell?: (staffId: string, date: string) => void;
   onUpdateStaff?: (staffId: string, updates: { eligibleShifts: EligibleShift[] }) => void;
   onEditingCellChange?: (cell: { staffId: string; date: string } | null) => void;
   onHoverCellChange?: (cell: { staffId: string; date: string } | null) => void;
@@ -29,6 +31,8 @@ export function ScheduleGrid({
   affectedCells,
   onAssignmentChange,
   onToggleLock,
+  onToggleExclusion,
+  onResetCell,
   onUpdateStaff,
   onEditingCellChange,
   onHoverCellChange,
@@ -246,10 +250,15 @@ export function ScheduleGrid({
                         affectReason={affectReason}
                         isLocked={assignment?.isLocked ?? false}
                         eligibleShifts={getEligibleShifts(staffMember)}
+                        excludedShifts={schedule.cellExclusions?.[key] ?? []}
                         onChange={(shift) =>
                           onAssignmentChange(staffMember.id, dateString, shift)
                         }
                         onToggleLock={() => onToggleLock?.(staffMember.id, dateString)}
+                        onToggleExclusion={(shift) =>
+                          onToggleExclusion?.(staffMember.id, dateString, shift)
+                        }
+                        onResetCell={() => onResetCell?.(staffMember.id, dateString)}
                         onFocus={() =>
                           onEditingCellChange?.({ staffId: staffMember.id, date: dateString })
                         }
