@@ -18,7 +18,7 @@ export interface ApiConstraintSeverity {
 }
 
 export interface GenerateRequest {
-  staff: Array<{ id: string; name: string }>;
+  staff: Array<{ id: string; name: string; eligibleShifts?: ('D' | 'E' | 'N')[] }>;
   startDate: string;
   constraints: {
     maxConsecutiveNights: number;
@@ -40,7 +40,7 @@ export interface GenerateResponse {
 }
 
 export interface FeasibilityCheckRequest {
-  staff: Array<{ id: string; name: string }>;
+  staff: Array<{ id: string; name: string; eligibleShifts?: ('D' | 'E' | 'N')[] }>;
   startDate: string;
   constraints: {
     maxConsecutiveNights: number;

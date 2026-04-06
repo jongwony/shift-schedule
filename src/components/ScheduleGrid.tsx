@@ -1,11 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { addDays, parseISO, format } from 'date-fns';
-import type { Schedule, Staff, Violation, ShiftType, ShiftAssignment } from '@/types';
+import type { Schedule, Staff, Violation, ShiftType, ShiftAssignment, EligibleShift } from '@/types';
 import { formatDateKorean, isWeekend } from '@/utils/dateUtils';
 import { DAY_NAMES } from '@/utils/dayUtils';
 import { countShiftsByType, countStaffByShiftPerDate } from '@/utils/shiftUtils';
+import { getEligibleShifts } from '@/utils/staffUtils';
 import { getCellKey, type ImpactReason } from '@/utils/impactCalculator';
 import { ShiftCell } from './ShiftCell';
+import { EligibilityPopover } from './EligibilityPopover';
 import { cn } from '@/lib/utils';
 
 interface ScheduleGridProps {
@@ -15,6 +17,7 @@ interface ScheduleGridProps {
   affectedCells: Map<string, ImpactReason>;
   onAssignmentChange: (staffId: string, date: string, shift: ShiftType) => void;
   onToggleLock?: (staffId: string, date: string) => void;
+  onUpdateStaff?: (staffId: string, updates: { eligibleShifts: EligibleShift[] }) => void;
   onEditingCellChange?: (cell: { staffId: string; date: string } | null) => void;
   onHoverCellChange?: (cell: { staffId: string; date: string } | null) => void;
 }
@@ -26,9 +29,14 @@ export function ScheduleGrid({
   affectedCells,
   onAssignmentChange,
   onToggleLock,
+  onUpdateStaff,
   onEditingCellChange,
   onHoverCellChange,
 }: ScheduleGridProps) {
+  const [eligibilityPopover, setEligibilityPopover] = useState<{
+    staffId: string;
+    position: { x: number; y: number };
+  } | null>(null);
   // Generate 28 dates from schedule.startDate
   const dates = useMemo(() => {
     const result: { date: Date; dateString: string }[] = [];
@@ -170,17 +178,36 @@ export function ScheduleGrid({
               <tr key={staffMember.id} className="hover:bg-gray-50/50 transition-colors">
                 <td
                   className={cn(
-                    'sticky left-0 z-10 bg-white p-2 border-b border-r border-gray-200 text-sm font-medium min-w-[100px]',
+                    'sticky left-0 z-10 bg-white p-2 border-b border-r border-gray-200 text-sm font-medium min-w-[100px] cursor-pointer select-none hover:bg-gray-50',
                     isLastRow && 'border-b-0'
                   )}
+                  onClick={(e) => {
+                    setEligibilityPopover({
+                      staffId: staffMember.id,
+                      position: { x: e.clientX, y: e.clientY },
+                    });
+                  }}
+                  title="클릭하여 가능 근무 설정"
                 >
                   {(() => {
                     const juhuDay = schedule.staffJuhuDays?.find(
                       (j) => j.staffId === staffMember.id
                     )?.juhuDay;
-                    return juhuDay !== undefined
+                    const eligible = getEligibleShifts(staffMember);
+                    const isRestricted = eligible.length < 3;
+                    const nameText = juhuDay !== undefined
                       ? `${staffMember.name} (${DAY_NAMES[juhuDay]})`
                       : staffMember.name;
+                    return (
+                      <>
+                        {nameText}
+                        {isRestricted && (
+                          <span className="ml-1 text-xs text-gray-400">
+                            {eligible.join('')}
+                          </span>
+                        )}
+                      </>
+                    );
                   })()}
                 </td>
                 {dates.map(({ date, dateString }) => {
@@ -203,6 +230,7 @@ export function ScheduleGrid({
                         isAffected={affectReason !== undefined}
                         affectReason={affectReason}
                         isLocked={assignment?.isLocked ?? false}
+                        eligibleShifts={staffMember.eligibleShifts}
                         onChange={(shift) =>
                           onAssignmentChange(staffMember.id, dateString, shift)
                         }
@@ -339,6 +367,23 @@ export function ScheduleGrid({
       </div>
       {/* Scroll indicator - only on mobile */}
       <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none sm:hidden" />
+
+      {/* Eligibility popover */}
+      {eligibilityPopover && (() => {
+        const popoverStaff = staff.find((s) => s.id === eligibilityPopover.staffId);
+        if (!popoverStaff) return null;
+        return (
+          <EligibilityPopover
+            position={eligibilityPopover.position}
+            staffName={popoverStaff.name}
+            eligibleShifts={getEligibleShifts(popoverStaff)}
+            onUpdate={(shifts) =>
+              onUpdateStaff?.(popoverStaff.id, { eligibleShifts: shifts })
+            }
+            onClose={() => setEligibilityPopover(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

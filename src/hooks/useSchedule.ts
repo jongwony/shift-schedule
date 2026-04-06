@@ -12,6 +12,7 @@ import type {
 } from '@/types';
 import { checkFeasibility, getDefaultConfig } from '@/solver/feasibilityChecker';
 import { calculateScheduleCompleteness } from '@/utils/shiftUtils';
+import { getEligibleShifts } from '@/utils/staffUtils';
 import {
   calculateCellImpact,
   buildImpactMap,
@@ -258,7 +259,7 @@ export function useSchedule() {
   }, [setStaff, setSchedule, setPreviousPeriodEnd]);
 
   const updateStaff = useCallback(
-    (staffId: string, updates: Partial<Pick<Staff, 'name'>>) => {
+    (staffId: string, updates: Partial<Pick<Staff, 'name' | 'eligibleShifts'>>) => {
       setStaff((prev) =>
         prev.map((s) => (s.id === staffId ? { ...s, ...updates } : s))
       );
@@ -358,7 +359,7 @@ export function useSchedule() {
     const lockedAssignments = schedule.assignments.filter((a) => a.isLocked);
 
     const requestPayload = {
-      staff: staff.map((s) => ({ id: s.id, name: s.name })),
+      staff: staff.map((s) => ({ id: s.id, name: s.name, eligibleShifts: getEligibleShifts(s) })),
       startDate: schedule.startDate,
       constraints: {
         maxConsecutiveNights: config.maxConsecutiveNights,

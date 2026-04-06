@@ -12,3 +12,4 @@ export {
   type CellImpact,
   type ImpactReason,
 } from './impactCalculator';
+export { getEligibleShifts, isShiftEligible } from './staffUtils';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type { ShiftType, Violation } from '@/types';
+import type { ShiftType, EligibleShift, Violation } from '@/types';
 import type { ImpactReason } from '@/utils/impactCalculator';
 import { cn } from '@/lib/utils';
 import { useLongPress } from '@/hooks/useLongPress';
@@ -12,6 +12,7 @@ interface ShiftCellProps {
   isAffected?: boolean;
   affectReason?: ImpactReason;
   isLocked?: boolean;
+  eligibleShifts?: EligibleShift[];
   onChange: (shift: ShiftType) => void;
   onToggleLock?: () => void;
   onFocus?: () => void;
@@ -32,7 +33,7 @@ const SHIFT_CONFIG: Record<ShiftType, { bg: string; hover: string; text: string;
   OFF: { bg: 'bg-slate-100', hover: 'hover:bg-slate-200', text: 'text-slate-600', label: '휴무' },
 };
 
-const SHIFT_CYCLE: (ShiftType | null)[] = [null, 'D', 'E', 'N', 'OFF'];
+const ALL_ELIGIBLE: EligibleShift[] = ['D', 'E', 'N'];
 
 export function ShiftCell({
   shift,
@@ -40,6 +41,7 @@ export function ShiftCell({
   isAffected,
   affectReason,
   isLocked,
+  eligibleShifts = ALL_ELIGIBLE,
   onChange,
   onToggleLock,
   onFocus,
@@ -56,20 +58,17 @@ export function ShiftCell({
   const violationMessages = violations.map((v) => v.message).join('\n');
   const impactStyle = affectReason ? IMPACT_STYLES[affectReason] : null;
 
+  // Build dynamic cycle from eligible shifts: [eligible..., 'OFF']
+  const cycle: ShiftType[] = [...eligibleShifts, 'OFF'];
+
   const handleClick = () => {
     if (isLocked) {
       toast.info('셀이 고정되어 있습니다. 우클릭으로 해제하세요.');
       return;
     }
-    const currentIndex = SHIFT_CYCLE.indexOf(shift);
-    const nextIndex = (currentIndex + 1) % SHIFT_CYCLE.length;
-    const nextShift = SHIFT_CYCLE[nextIndex];
-    if (nextShift !== null) {
-      onChange(nextShift);
-    } else {
-      // Skip null, go to D
-      onChange('D');
-    }
+    const currentIndex = shift !== null ? cycle.indexOf(shift) : -1;
+    const nextIndex = (currentIndex + 1) % cycle.length;
+    onChange(cycle[nextIndex]);
   };
 
   const handleContextMenu = (e: React.MouseEvent) => {
