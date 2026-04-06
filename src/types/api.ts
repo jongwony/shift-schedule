@@ -1,4 +1,5 @@
 import type { ShiftAssignment, DayOfWeek, ConstraintSeverity, SoftConstraintConfig, WeeklyStaffing } from './index';
+import type { EligibleShift } from './staff';
 
 export type GenerationStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -18,7 +19,7 @@ export interface ApiConstraintSeverity {
 }
 
 export interface GenerateRequest {
-  staff: Array<{ id: string; name: string; eligibleShifts?: ('D' | 'E' | 'N')[] }>;
+  staff: Array<{ id: string; name: string; eligibleShifts?: EligibleShift[] }>;
   startDate: string;
   constraints: {
     maxConsecutiveNights: number;
@@ -40,7 +41,7 @@ export interface GenerateResponse {
 }
 
 export interface FeasibilityCheckRequest {
-  staff: Array<{ id: string; name: string; eligibleShifts?: ('D' | 'E' | 'N')[] }>;
+  staff: Array<{ id: string; name: string; eligibleShifts?: EligibleShift[] }>;
   startDate: string;
   constraints: {
     maxConsecutiveNights: number;

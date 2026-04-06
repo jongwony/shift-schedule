@@ -181,11 +181,26 @@ export function ScheduleGrid({
                     'sticky left-0 z-10 bg-white p-2 border-b border-r border-gray-200 text-sm font-medium min-w-[100px] cursor-pointer select-none hover:bg-gray-50',
                     isLastRow && 'border-b-0'
                   )}
+                  role="button"
+                  tabIndex={0}
+                  aria-haspopup="dialog"
                   onClick={(e) => {
                     setEligibilityPopover({
                       staffId: staffMember.id,
                       position: { x: e.clientX, y: e.clientY },
                     });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setEligibilityPopover({
+                        staffId: staffMember.id,
+                        position: {
+                          x: e.currentTarget.getBoundingClientRect().left,
+                          y: e.currentTarget.getBoundingClientRect().bottom,
+                        },
+                      });
+                    }
                   }}
                   title="클릭하여 가능 근무 설정"
                 >
@@ -230,7 +245,7 @@ export function ScheduleGrid({
                         isAffected={affectReason !== undefined}
                         affectReason={affectReason}
                         isLocked={assignment?.isLocked ?? false}
-                        eligibleShifts={staffMember.eligibleShifts}
+                        eligibleShifts={getEligibleShifts(staffMember)}
                         onChange={(shift) =>
                           onAssignmentChange(staffMember.id, dateString, shift)
                         }

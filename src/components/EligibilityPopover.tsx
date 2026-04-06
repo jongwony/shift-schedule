@@ -51,6 +51,7 @@ export function EligibilityPopover({
               type="button"
               onClick={() => handleToggle(shift)}
               disabled={isLastActive}
+              aria-pressed={isActive}
               title={isLastActive ? '최소 1개 근무 유형이 필요합니다' : undefined}
               className={cn(
                 'w-10 h-8 rounded border text-sm font-semibold transition-colors',
