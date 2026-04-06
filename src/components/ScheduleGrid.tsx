@@ -43,13 +43,14 @@ export function ScheduleGrid({
   } | null>(null);
   // Generate 28 dates from schedule.startDate
   const dates = useMemo(() => {
-    const result: { date: Date; dateString: string }[] = [];
+    const result: { date: Date; dateString: string; isWeekStart: boolean }[] = [];
     const start = parseISO(schedule.startDate);
     for (let i = 0; i < 28; i++) {
       const date = addDays(start, i);
       result.push({
         date,
         dateString: format(date, 'yyyy-MM-dd'),
+        isWeekStart: i > 0 && date.getDay() === 0,
       });
     }
     return result;
@@ -135,13 +136,14 @@ export function ScheduleGrid({
             >
               직원
             </th>
-            {dates.map(({ date, dateString }) => (
+            {dates.map(({ date, dateString, isWeekStart }) => (
               <th
                 key={dateString}
                 scope="col"
                 className={cn(
                   'p-2 border-b border-gray-200 text-center text-xs font-medium whitespace-nowrap',
-                  isWeekend(date) ? 'bg-slate-200 text-slate-700' : 'bg-gray-50 text-gray-600'
+                  isWeekend(date) ? 'bg-slate-200 text-slate-700' : 'bg-gray-50 text-gray-600',
+                  isWeekStart && 'border-l-2 border-l-gray-300'
                 )}
               >
                 {formatDateKorean(date)}
@@ -229,7 +231,7 @@ export function ScheduleGrid({
                     );
                   })()}
                 </td>
-                {dates.map(({ date, dateString }) => {
+                {dates.map(({ date, dateString, isWeekStart }) => {
                   const key = getCellKey(staffMember.id, dateString);
                   const assignment = assignmentMap.get(key);
                   const cellViolations = violationMap.get(key) || [];
@@ -240,7 +242,8 @@ export function ScheduleGrid({
                       className={cn(
                         'p-1 border-b border-gray-200',
                         isWeekend(date) && 'bg-slate-100',
-                        isLastRow && 'border-b-0'
+                        isLastRow && 'border-b-0',
+                        isWeekStart && 'border-l-2 border-l-gray-300'
                       )}
                     >
                       <ShiftCell
@@ -314,14 +317,15 @@ export function ScheduleGrid({
             <td className="sticky left-0 z-10 bg-amber-50 p-2 border-t border-r border-gray-200 text-sm font-medium text-amber-600">
               D 인원
             </td>
-            {dates.map(({ date, dateString }) => {
+            {dates.map(({ date, dateString, isWeekStart }) => {
               const counts = perDateCounts.get(dateString);
               return (
                 <td
                   key={dateString}
                   className={cn(
                     'p-2 border-t border-gray-200 text-center text-sm font-medium text-amber-600',
-                    isWeekend(date) && 'bg-amber-200/70'
+                    isWeekend(date) && 'bg-amber-200/70',
+                    isWeekStart && 'border-l-2 border-l-gray-300'
                   )}
                 >
                   {counts?.D ?? 0}
@@ -338,14 +342,15 @@ export function ScheduleGrid({
             <td className="sticky left-0 z-10 bg-blue-50 p-2 border-r border-gray-200 text-sm font-medium text-blue-600">
               E 인원
             </td>
-            {dates.map(({ date, dateString }) => {
+            {dates.map(({ date, dateString, isWeekStart }) => {
               const counts = perDateCounts.get(dateString);
               return (
                 <td
                   key={dateString}
                   className={cn(
                     'p-2 text-center text-sm font-medium text-blue-600',
-                    isWeekend(date) && 'bg-blue-200/70'
+                    isWeekend(date) && 'bg-blue-200/70',
+                    isWeekStart && 'border-l-2 border-l-gray-300'
                   )}
                 >
                   {counts?.E ?? 0}
@@ -362,14 +367,15 @@ export function ScheduleGrid({
             <td className="sticky left-0 z-10 bg-purple-50 p-2 border-r border-gray-200 text-sm font-medium text-purple-600">
               N 인원
             </td>
-            {dates.map(({ date, dateString }) => {
+            {dates.map(({ date, dateString, isWeekStart }) => {
               const counts = perDateCounts.get(dateString);
               return (
                 <td
                   key={dateString}
                   className={cn(
                     'p-2 text-center text-sm font-medium text-purple-600',
-                    isWeekend(date) && 'bg-purple-200/70'
+                    isWeekend(date) && 'bg-purple-200/70',
+                    isWeekStart && 'border-l-2 border-l-gray-300'
                   )}
                 >
                   {counts?.N ?? 0}
