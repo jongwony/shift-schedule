@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Toaster, toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StaffList } from '@/components/StaffList';
@@ -8,10 +9,20 @@ import { ViolationList } from '@/components/ViolationList';
 import { PeriodSelector } from '@/components/PeriodSelector';
 import { PreviousPeriodInput } from '@/components/PreviousPeriodInput';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { LoginPrompt } from '@/components/LoginPrompt';
+import { UpgradePrompt } from '@/components/UpgradePrompt';
+import { UserMenu } from '@/components/UserMenu';
+import { GenerationCounter } from '@/components/GenerationCounter';
 import { useSchedule } from '@/hooks/useSchedule';
-import { isApiConfigured } from '@/services/solverApi';
+import { useAuth } from '@/contexts/AuthContext';
+import { isApiConfigured, getLastRemainingCount } from '@/services/solverApi';
+import { GenerationLimitError } from '@/types/auth';
 
 function App() {
+  const { user, isAuthenticated } = useAuth();
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+  const [upgradePromptOpen, setUpgradePromptOpen] = useState(false);
+
   const {
     staff,
     schedule,
@@ -40,6 +51,28 @@ function App() {
     setConfig,
     importFromJSON,
   } = useSchedule();
+
+  // Auth-gated auto-generation handler
+  const handleGenerate = async () => {
+    if (!isAuthenticated) {
+      setLoginPromptOpen(true);
+      return;
+    }
+    try {
+      await generateAutoSchedule();
+    } catch (error) {
+      if (error instanceof GenerationLimitError) {
+        setUpgradePromptOpen(true);
+      }
+      // Other errors are already handled by useSchedule via toast
+    }
+  };
+
+  const handleUpgrade = (type: 'daypass' | 'annual') => {
+    setUpgradePromptOpen(false);
+    // TODO: integrate TossPayments checkout flow
+    toast.info(`${type === 'annual' ? '연간 구독' : '데이 패스'} 결제 준비 중`);
+  };
 
   // Export handler - TSV to clipboard for spreadsheet paste
   const handleExport = async () => {
@@ -125,10 +158,27 @@ function App() {
               Shift Schedule - 교대 근무 검증하기
             </h1>
             <nav aria-label="주요 기능">
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                {isAuthenticated && user && (
+                  <>
+                    <GenerationCounter
+                      remaining={getLastRemainingCount()}
+                      plan={user.plan}
+                    />
+                    <UserMenu user={user} />
+                  </>
+                )}
+                {!isAuthenticated && (
+                  <button
+                    onClick={() => setLoginPromptOpen(true)}
+                    className="px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  >
+                    로그인
+                  </button>
+                )}
                 {isApiConfigured() && (
                   <button
-                    onClick={generateAutoSchedule}
+                    onClick={handleGenerate}
                     disabled={generationStatus === 'loading' || staff.length === 0}
                     aria-label="근무표 자동 생성"
                     className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -247,6 +297,13 @@ function App() {
             </ErrorBoundary>
           </section>
         </main>
+        {/* Auth dialogs */}
+        <LoginPrompt open={loginPromptOpen} onOpenChange={setLoginPromptOpen} />
+        <UpgradePrompt
+          open={upgradePromptOpen}
+          onOpenChange={setUpgradePromptOpen}
+          onUpgrade={handleUpgrade}
+        />
       </div>
     </ErrorBoundary>
   );

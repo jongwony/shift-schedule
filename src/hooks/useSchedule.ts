@@ -10,6 +10,7 @@ import type {
   GenerationStatus,
   FeasibilityCheckResponse,
 } from '@/types';
+import { GenerationLimitError } from '@/types/auth';
 import { checkFeasibility, getDefaultConfig } from '@/solver/feasibilityChecker';
 import { calculateScheduleCompleteness } from '@/utils/shiftUtils';
 import { getEligibleShifts } from '@/utils/staffUtils';
@@ -562,6 +563,10 @@ export function useSchedule() {
       }
     } catch (error) {
       setGenerationStatus('error');
+      // Re-throw GenerationLimitError so App-level handler can show UpgradePrompt
+      if (error instanceof GenerationLimitError) {
+        throw error;
+      }
       const message = error instanceof Error ? error.message : '알 수 없는 오류';
       toast.error(`API 오류: ${message}`);
     }
