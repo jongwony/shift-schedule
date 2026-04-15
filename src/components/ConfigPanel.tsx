@@ -151,10 +151,10 @@ export function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
                 </tr>
               </thead>
               <tbody>
-                {(['weekday', 'weekend'] as const).map((dayType) => (
+                {(['weekday', 'friday', 'weekend'] as const).map((dayType) => (
                   <tr key={dayType} className="border-t border-gray-100">
                     <td className="py-2 pr-2 font-medium text-sm whitespace-nowrap">
-                      {dayType === 'weekday' ? '평일' : '주말'}
+                      {dayType === 'weekday' ? '평일' : dayType === 'friday' ? '금요일' : '주말'}
                     </td>
                     {config.weeklyStaffing.flatMap((weekConfig, weekIndex) =>
                       (['day', 'evening', 'night'] as const).map((shiftKey) => (

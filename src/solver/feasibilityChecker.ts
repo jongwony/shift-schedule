@@ -92,17 +92,25 @@ export function validateConfigConsistency(
   const { weeklyStaffing } = config;
 
   for (let week = 0; week < weeklyStaffing.length; week++) {
-    const { weekday, weekend } = weeklyStaffing[week];
+    const { weekday, friday, weekend } = weeklyStaffing[week];
     const weekLabel = `${week + 1}주차`;
 
     const minWeekdayTotal =
       weekday.day.min + weekday.evening.min + weekday.night.min;
+    const minFridayTotal =
+      friday.day.min + friday.evening.min + friday.night.min;
     const minWeekendTotal =
       weekend.day.min + weekend.evening.min + weekend.night.min;
 
     if (minWeekdayTotal > staffCount) {
       warnings.push(
         `${weekLabel} 평일 최소 인원 합계(${minWeekdayTotal}명)가 총 직원 수(${staffCount}명)를 초과합니다.`
+      );
+    }
+
+    if (minFridayTotal > staffCount) {
+      warnings.push(
+        `${weekLabel} 금요일 최소 인원 합계(${minFridayTotal}명)가 총 직원 수(${staffCount}명)를 초과합니다.`
       );
     }
 
@@ -116,7 +124,7 @@ export function validateConfigConsistency(
   // Check if monthly night requirement is feasible
   const { monthlyNightsRequired, maxConsecutiveNights } = config;
   const minNightStaffPerDay = Math.min(
-    ...weeklyStaffing.flatMap(w => [w.weekday.night.min, w.weekend.night.min])
+    ...weeklyStaffing.flatMap(w => [w.weekday.night.min, w.friday.night.min, w.weekend.night.min])
   );
 
   // Total night shifts needed over 28 days (minimum)
@@ -153,6 +161,11 @@ export function getDefaultConfig(): ConstraintConfig {
     weeklyWorkHours: 40,
     weeklyStaffing: Array.from({ length: 4 }, () => ({
       weekday: {
+        day: { min: 1, max: 2 },
+        evening: { min: 2, max: 2 },
+        night: { min: 1, max: 2 },
+      },
+      friday: {
         day: { min: 1, max: 2 },
         evening: { min: 2, max: 2 },
         night: { min: 1, max: 2 },

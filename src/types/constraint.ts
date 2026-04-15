@@ -32,6 +32,7 @@ export interface DailyStaffing {
 
 export interface WeeklyStaffing {
   weekday: DailyStaffing;
+  friday: DailyStaffing;
   weekend: DailyStaffing;
 }
 

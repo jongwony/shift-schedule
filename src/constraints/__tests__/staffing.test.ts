@@ -31,6 +31,11 @@ function createTestContext(
         evening: { min: 2, max: 2 },
         night: { min: 1, max: 2 },
       },
+      friday: {
+        day: { min: 3, max: 3 },
+        evening: { min: 2, max: 2 },
+        night: { min: 1, max: 2 },
+      },
       weekend: {
         day: { min: 2, max: 2 },
         evening: { min: 2, max: 2 },
@@ -123,6 +128,26 @@ describe('staffingConstraint', () => {
     expect(eveningViolation).toBeDefined();
     expect(eveningViolation?.message).toContain('이브닝 근무 1명');
     expect(eveningViolation?.message).toContain('최소 2명');
+  });
+
+  it('should apply friday staffing requirements on fridays', () => {
+    // Friday 2025-01-10 requires D=3, E=2, N=1 (distinct from weekday D=1)
+    const context = createTestContext([
+      { staffId: 'staff-1', date: '2025-01-10', shift: 'D' },
+      { staffId: 'staff-2', date: '2025-01-10', shift: 'D' },
+      { staffId: 'staff-3', date: '2025-01-10', shift: 'E' },
+      { staffId: 'staff-4', date: '2025-01-10', shift: 'E' },
+      { staffId: 'staff-5', date: '2025-01-10', shift: 'N' },
+    ]);
+
+    const result = staffingConstraint.check(context);
+
+    const fridayDayViolation = result.violations.find(
+      (v) => v.context.date === '2025-01-10' && v.message.includes('데이')
+    );
+    expect(fridayDayViolation).toBeDefined();
+    expect(fridayDayViolation?.message).toContain('데이 근무 2명');
+    expect(fridayDayViolation?.message).toContain('최소 3명');
   });
 
   it('should apply weekend staffing requirements on weekends', () => {

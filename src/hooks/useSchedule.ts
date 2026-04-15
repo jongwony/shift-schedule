@@ -31,7 +31,7 @@ const STORAGE_KEYS = {
 } as const;
 
 // Schema version: increment when localStorage structure changes
-const CURRENT_SCHEMA_VERSION = 3;
+const CURRENT_SCHEMA_VERSION = 4;
 
 /**
  * Check and migrate localStorage schema.
@@ -75,6 +75,13 @@ function migrateStorageIfNeeded(): boolean {
           }));
           delete config.weekdayStaffing;
           delete config.weekendStaffing;
+        }
+
+        // v3 → v4: add friday bucket (copy weekday values to preserve prior behavior)
+        if (version < 4 && Array.isArray(config.weeklyStaffing)) {
+          config.weeklyStaffing = config.weeklyStaffing.map((week: Record<string, unknown>) =>
+            week.friday ? week : { ...week, friday: structuredClone(week.weekday) }
+          );
         }
 
         localStorage.setItem(STORAGE_KEYS.config, JSON.stringify(config));
