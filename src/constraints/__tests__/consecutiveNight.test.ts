@@ -27,6 +27,11 @@ function createTestContext(
         evening: { min: 1, max: 2 },
         night: { min: 1, max: 2 },
       },
+      friday: {
+        day: { min: 1, max: 2 },
+        evening: { min: 1, max: 2 },
+        night: { min: 1, max: 2 },
+      },
       weekend: {
         day: { min: 1, max: 2 },
         evening: { min: 1, max: 2 },
