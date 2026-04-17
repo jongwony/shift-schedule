@@ -26,6 +26,12 @@ export interface GenerateRequest {
     weeklyStaffing: WeeklyStaffing[];
     constraintSeverity?: ApiConstraintSeverity;
     softConstraints?: SoftConstraintConfig;
+    /**
+     * Required nights per staff in the window's front portion (= start-month tail).
+     * Solver adds hard constraint: sum(N in front portion) == count (when count > 0).
+     * Absent or 0 value means unconstrained.
+     */
+    requiredNights?: Record<string, number>;
   };
   previousPeriodEnd?: ShiftAssignment[];
   lockedAssignments?: ShiftAssignment[];

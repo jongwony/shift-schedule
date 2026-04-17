@@ -515,6 +515,7 @@ export function useSchedule() {
         weeklyStaffing: config.weeklyStaffing,
         constraintSeverity: config.constraintSeverity,
         softConstraints: config.softConstraints,
+        requiredNights,
       },
     };
 
@@ -587,7 +588,7 @@ export function useSchedule() {
       const message = error instanceof Error ? error.message : '알 수 없는 오류';
       toast.error(`API 오류: ${message}`);
     }
-  }, [staff, schedule.startDate, schedule.assignments, schedule.cellExclusions, config, previousPeriodEnd, setSchedule]);
+  }, [staff, schedule.startDate, schedule.assignments, schedule.cellExclusions, config, previousPeriodEnd, requiredNights, setSchedule]);
 
   // ==================== Export/Import Actions ====================
 
