@@ -16,7 +16,6 @@ const CONSTRAINT_LABELS: Record<ConstraintKey, string> = {
   shiftOrder: '역순 금지 (D-E-N 순서)',
   nightOffDay: 'N-OFF-D 금지',
   consecutiveNight: '연속 나이트 제한',
-  monthlyNight: '월간 나이트 요구',
   staffing: '최소 인원 요구',
   weeklyOff: '주간 휴무',
 };
@@ -83,19 +82,6 @@ export function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
                 value={config.maxConsecutiveNights}
                 onChange={(e) =>
                   updateConfig({ maxConsecutiveNights: Number(e.target.value) })
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor="monthly-nights">월간 나이트 요구량 (회)</Label>
-              <Input
-                id="monthly-nights"
-                type="number"
-                min={0}
-                max={28}
-                value={config.monthlyNightsRequired}
-                onChange={(e) =>
-                  updateConfig({ monthlyNightsRequired: Number(e.target.value) })
                 }
               />
             </div>

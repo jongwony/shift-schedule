@@ -27,11 +27,12 @@ const STORAGE_KEYS = {
   schedule: 'shift-schedule-current',
   config: 'shift-schedule-config',
   previousPeriod: 'shift-schedule-previous',
+  requiredNights: 'shift-schedule-required-nights',
   schemaVersion: 'shift-schedule-version',
 } as const;
 
 // Schema version: increment when localStorage structure changes
-const CURRENT_SCHEMA_VERSION = 4;
+const CURRENT_SCHEMA_VERSION = 5;
 
 /**
  * Check and migrate localStorage schema.
@@ -82,6 +83,17 @@ function migrateStorageIfNeeded(): boolean {
           config.weeklyStaffing = config.weeklyStaffing.map((week: Record<string, unknown>) =>
             week.friday ? week : { ...week, friday: structuredClone(week.weekday) }
           );
+        }
+
+        // v4 → v5: remove monthlyNight* fields (replaced by requiredNights manual input)
+        if (version < 5) {
+          delete config.monthlyNightsRequired;
+          if (config.enabledConstraints) {
+            delete config.enabledConstraints.monthlyNight;
+          }
+          if (config.constraintSeverity) {
+            delete config.constraintSeverity.monthlyNight;
+          }
         }
 
         localStorage.setItem(STORAGE_KEYS.config, JSON.stringify(config));
@@ -165,6 +177,10 @@ export function useSchedule() {
   const [previousPeriodEnd, setPreviousPeriodEnd] = useLocalStorage<ShiftAssignment[]>(
     STORAGE_KEYS.previousPeriod,
     []
+  );
+  const [requiredNights, setRequiredNights] = useLocalStorage<Record<string, number>>(
+    STORAGE_KEYS.requiredNights,
+    {}
   );
 
   // Generation status for auto-schedule API
@@ -495,11 +511,11 @@ export function useSchedule() {
       startDate: schedule.startDate,
       constraints: {
         maxConsecutiveNights: config.maxConsecutiveNights,
-        monthlyNightsRequired: config.monthlyNightsRequired,
         weeklyWorkHours: config.weeklyWorkHours,
         weeklyStaffing: config.weeklyStaffing,
         constraintSeverity: config.constraintSeverity,
         softConstraints: config.softConstraints,
+        requiredNights,
       },
     };
 
@@ -572,7 +588,7 @@ export function useSchedule() {
       const message = error instanceof Error ? error.message : '알 수 없는 오류';
       toast.error(`API 오류: ${message}`);
     }
-  }, [staff, schedule.startDate, schedule.assignments, schedule.cellExclusions, config, previousPeriodEnd, setSchedule]);
+  }, [staff, schedule.startDate, schedule.assignments, schedule.cellExclusions, config, previousPeriodEnd, requiredNights, setSchedule]);
 
   // ==================== Export/Import Actions ====================
 
@@ -618,6 +634,7 @@ export function useSchedule() {
     schedule,
     config,
     previousPeriodEnd,
+    requiredNights,
     feasibilityResult,
     scheduleCompleteness,
     generationStatus,
@@ -640,6 +657,7 @@ export function useSchedule() {
     setStartDate,
     clearSchedule,
     setPreviousPeriodEnd,
+    setRequiredNights,
 
     // Auto-generation
     generateAutoSchedule,

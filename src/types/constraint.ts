@@ -78,14 +78,12 @@ export interface SoftConstraintConfig {
 
 export interface ConstraintConfig {
   maxConsecutiveNights: number;
-  monthlyNightsRequired: number;
   weeklyWorkHours: number;
   weeklyStaffing: WeeklyStaffing[];
   enabledConstraints: {
     shiftOrder: boolean;
     nightOffDay: boolean;
     consecutiveNight: boolean;
-    monthlyNight: boolean;
     staffing: boolean;
     weeklyOff: boolean;
   };
@@ -94,7 +92,6 @@ export interface ConstraintConfig {
     shiftOrder: ConstraintSeverity;
     nightOffDay: ConstraintSeverity;
     consecutiveNight: ConstraintSeverity;
-    monthlyNight: ConstraintSeverity;
     staffing: ConstraintSeverity;
     weeklyOff: ConstraintSeverity;
   };

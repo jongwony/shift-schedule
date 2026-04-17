@@ -13,7 +13,6 @@ export interface ApiConstraintSeverity {
   shiftOrder?: ConstraintSeverity;
   nightOffDay?: ConstraintSeverity;
   consecutiveNight?: ConstraintSeverity;
-  monthlyNight?: ConstraintSeverity;
   staffing?: ConstraintSeverity;
   weeklyOff?: ConstraintSeverity;
 }
@@ -23,11 +22,16 @@ export interface GenerateRequest {
   startDate: string;
   constraints: {
     maxConsecutiveNights: number;
-    monthlyNightsRequired: number;
     weeklyWorkHours: number;
     weeklyStaffing: WeeklyStaffing[];
     constraintSeverity?: ApiConstraintSeverity;
     softConstraints?: SoftConstraintConfig;
+    /**
+     * Required nights per staff in the window's front portion (= start-month tail).
+     * Solver adds hard constraint: sum(N in front portion) == count (when count > 0).
+     * Absent or 0 value means unconstrained.
+     */
+    requiredNights?: Record<string, number>;
   };
   previousPeriodEnd?: ShiftAssignment[];
   lockedAssignments?: ShiftAssignment[];
@@ -46,7 +50,6 @@ export interface FeasibilityCheckRequest {
   startDate: string;
   constraints: {
     maxConsecutiveNights: number;
-    monthlyNightsRequired: number;
     weeklyWorkHours: number;
     weeklyStaffing: WeeklyStaffing[];
     constraintSeverity?: ApiConstraintSeverity;
