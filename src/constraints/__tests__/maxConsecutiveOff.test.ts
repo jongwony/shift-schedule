@@ -20,7 +20,6 @@ function createTestContext(
 
   const config: ConstraintConfig = {
     maxConsecutiveNights: 4,
-    monthlyNightsRequired: 7,
     weeklyWorkHours: 40,
     weeklyStaffing: Array.from({ length: 4 }, () => ({
       weekday: {
@@ -43,7 +42,6 @@ function createTestContext(
       shiftOrder: true,
       nightOffDay: true,
       consecutiveNight: true,
-      monthlyNight: true,
       staffing: true,
       weeklyOff: true,
     },
@@ -51,7 +49,6 @@ function createTestContext(
       shiftOrder: 'hard',
       nightOffDay: 'hard',
       consecutiveNight: 'hard',
-      monthlyNight: 'soft',
       staffing: 'hard',
       weeklyOff: 'hard',
     },

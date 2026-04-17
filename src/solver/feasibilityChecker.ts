@@ -66,7 +66,6 @@ function constraintIdToConfigKey(id: string): ConstraintId | null {
     'shift-order': 'shiftOrder',
     'night-off-day': 'nightOffDay',
     'consecutive-night': 'consecutiveNight',
-    'monthly-night': 'monthlyNight',
     staffing: 'staffing',
     'weekly-off': 'weeklyOff',
   };
@@ -121,30 +120,8 @@ export function validateConfigConsistency(
     }
   }
 
-  // Check if monthly night requirement is feasible
-  const { monthlyNightsRequired, maxConsecutiveNights } = config;
-  const minNightStaffPerDay = Math.min(
-    ...weeklyStaffing.flatMap(w => [w.weekday.night.min, w.friday.night.min, w.weekend.night.min])
-  );
-
-  // Total night shifts needed over 28 days (minimum)
-  // Assuming 20 weekdays and 8 weekend days as rough estimate
-  const totalNightShiftsNeeded = minNightStaffPerDay * 28;
-
-  // Total night shifts available from all staff
-  const totalNightShiftsAvailable = staffCount * monthlyNightsRequired;
-
-  if (totalNightShiftsNeeded > totalNightShiftsAvailable) {
-    warnings.push(
-      `필요한 나이트 근무 총합(${totalNightShiftsNeeded}회)이 ` +
-        `가용 인력(${staffCount}명 × ${monthlyNightsRequired}회 = ${totalNightShiftsAvailable}회)을 초과합니다.`
-    );
-  }
-
-  // Check if consecutive night limit allows monthly requirement
-  // With max 4 consecutive nights, staff needs at least ceil(7/4) = 2 "runs" of night shifts
-  // This is just a basic sanity check
-  if (maxConsecutiveNights < 1) {
+  // Basic sanity check: consecutive night limit
+  if (config.maxConsecutiveNights < 1) {
     warnings.push('연속 나이트 최대 일수는 최소 1일 이상이어야 합니다.');
   }
 
@@ -157,7 +134,6 @@ export function validateConfigConsistency(
 export function getDefaultConfig(): ConstraintConfig {
   return {
     maxConsecutiveNights: 4,
-    monthlyNightsRequired: 7,
     weeklyWorkHours: 40,
     weeklyStaffing: Array.from({ length: 4 }, () => ({
       weekday: {
@@ -180,7 +156,6 @@ export function getDefaultConfig(): ConstraintConfig {
       shiftOrder: true,
       nightOffDay: true,
       consecutiveNight: true,
-      monthlyNight: true,
       staffing: true,
       weeklyOff: true,
     },
@@ -188,7 +163,6 @@ export function getDefaultConfig(): ConstraintConfig {
       shiftOrder: 'hard',
       nightOffDay: 'hard',
       consecutiveNight: 'hard',
-      monthlyNight: 'soft',
       staffing: 'hard',
       weeklyOff: 'hard',
     },

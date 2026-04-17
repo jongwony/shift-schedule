@@ -15,6 +15,7 @@ interface ScheduleGridProps {
   staff: Staff[];
   violations: Violation[];
   affectedCells: Map<string, ImpactReason>;
+  requiredNights?: Record<string, number>;
   onAssignmentChange: (staffId: string, date: string, shift: ShiftType) => void;
   onToggleLock?: (staffId: string, date: string) => void;
   onToggleExclusion?: (staffId: string, date: string, shift: ShiftType) => void;
@@ -29,6 +30,7 @@ export function ScheduleGrid({
   staff,
   violations,
   affectedCells,
+  requiredNights,
   onAssignmentChange,
   onToggleLock,
   onToggleExclusion,
@@ -293,11 +295,24 @@ export function ScheduleGrid({
                 </td>
                 <td
                   className={cn(
-                    'sticky right-[40px] z-10 bg-purple-50 p-2 border-b border-gray-200 text-center text-sm font-medium text-purple-600 min-w-[40px]',
-                    isLastRow && 'border-b-0'
+                    'sticky right-[40px] z-10 bg-purple-50 p-2 border-b border-gray-200 text-center text-sm font-medium min-w-[40px]',
+                    isLastRow && 'border-b-0',
+                    (() => {
+                      const req = requiredNights?.[staffMember.id];
+                      if (req != null && req > 0) {
+                        return staffCounts.N >= req ? 'text-purple-600' : 'text-red-500';
+                      }
+                      return 'text-purple-600';
+                    })()
                   )}
                 >
-                  {staffCounts.N}
+                  {(() => {
+                    const req = requiredNights?.[staffMember.id];
+                    if (req != null && req > 0) {
+                      return `${staffCounts.N}/${req}`;
+                    }
+                    return staffCounts.N;
+                  })()}
                 </td>
                 <td
                   className={cn(

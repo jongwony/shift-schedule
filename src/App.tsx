@@ -7,6 +7,7 @@ import { FeasibilityResult } from '@/components/FeasibilityResult';
 import { ViolationList } from '@/components/ViolationList';
 import { PeriodSelector } from '@/components/PeriodSelector';
 import { PreviousPeriodInput } from '@/components/PreviousPeriodInput';
+import { RequiredNightsInput } from '@/components/RequiredNightsInput';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useSchedule } from '@/hooks/useSchedule';
 import { isApiConfigured } from '@/services/solverApi';
@@ -17,6 +18,7 @@ function App() {
     schedule,
     config,
     previousPeriodEnd,
+    requiredNights,
     feasibilityResult,
     scheduleCompleteness,
     generationStatus,
@@ -33,6 +35,7 @@ function App() {
     resetCell,
     setStartDate,
     setPreviousPeriodEnd,
+    setRequiredNights,
     generateAutoSchedule,
     setEditingCell,
     setShowAllViolations,
@@ -199,7 +202,12 @@ function App() {
                         onStartDateChange={setStartDate}
                       />
                     </div>
-                    <div className="pt-8">
+                    <div className="pt-8 flex gap-2">
+                      <RequiredNightsInput
+                        staff={staff}
+                        requiredNights={requiredNights}
+                        onRequiredNightsChange={setRequiredNights}
+                      />
                       <PreviousPeriodInput
                         staff={staff}
                         previousPeriodEnd={previousPeriodEnd}
@@ -213,6 +221,7 @@ function App() {
                     staff={staff}
                     violations={feasibilityResult?.violations ?? []}
                     affectedCells={affectedCells}
+                    requiredNights={requiredNights}
                     onAssignmentChange={updateAssignment}
                     onToggleLock={toggleLock}
                     onToggleExclusion={toggleExclusion}

@@ -13,7 +13,6 @@ export interface ApiConstraintSeverity {
   shiftOrder?: ConstraintSeverity;
   nightOffDay?: ConstraintSeverity;
   consecutiveNight?: ConstraintSeverity;
-  monthlyNight?: ConstraintSeverity;
   staffing?: ConstraintSeverity;
   weeklyOff?: ConstraintSeverity;
 }
@@ -23,7 +22,6 @@ export interface GenerateRequest {
   startDate: string;
   constraints: {
     maxConsecutiveNights: number;
-    monthlyNightsRequired: number;
     weeklyWorkHours: number;
     weeklyStaffing: WeeklyStaffing[];
     constraintSeverity?: ApiConstraintSeverity;
@@ -46,7 +44,6 @@ export interface FeasibilityCheckRequest {
   startDate: string;
   constraints: {
     maxConsecutiveNights: number;
-    monthlyNightsRequired: number;
     weeklyWorkHours: number;
     weeklyStaffing: WeeklyStaffing[];
     constraintSeverity?: ApiConstraintSeverity;

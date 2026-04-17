@@ -1,7 +1,6 @@
 import { shiftOrderConstraint } from './shiftOrder';
 import { nightOffDayConstraint } from './nightOffDay';
 import { consecutiveNightConstraint } from './consecutiveNight';
-import { monthlyNightConstraint } from './monthlyNight';
 import { staffingConstraint } from './staffing';
 import { weeklyOffConstraint } from './weeklyOff';
 // Soft constraints - Worker perspective
@@ -25,7 +24,6 @@ export const constraintRegistry: Constraint[] = [
   shiftOrderConstraint,
   nightOffDayConstraint,
   consecutiveNightConstraint,
-  monthlyNightConstraint,
   staffingConstraint,
   weeklyOffConstraint,
   // Soft constraints - Worker perspective (T1)
@@ -47,7 +45,6 @@ export const constraintRegistry: Constraint[] = [
 export { shiftOrderConstraint } from './shiftOrder';
 export { nightOffDayConstraint } from './nightOffDay';
 export { consecutiveNightConstraint } from './consecutiveNight';
-export { monthlyNightConstraint } from './monthlyNight';
 export { staffingConstraint } from './staffing';
 export { weeklyOffConstraint } from './weeklyOff';
 // Soft constraints - Worker perspective
