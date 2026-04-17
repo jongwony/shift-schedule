@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { addDays, parseISO, format } from 'date-fns';
 import type { Schedule, Staff, Violation, ShiftType, ShiftAssignment, EligibleShift } from '@/types';
-import { formatDateKorean, isWeekend } from '@/utils/dateUtils';
+import { formatDateKorean, isWeekend, splitWindowByMonth } from '@/utils/dateUtils';
 import { DAY_NAMES } from '@/utils/dayUtils';
 import { countShiftsByType, countStaffByShiftPerDate } from '@/utils/shiftUtils';
 import { getEligibleShifts } from '@/utils/staffUtils';
@@ -43,6 +43,12 @@ export function ScheduleGrid({
     staffId: string;
     position: { x: number; y: number };
   } | null>(null);
+  // Window front portion end date (for requiredNights scope)
+  const { frontEndDate } = useMemo(
+    () => splitWindowByMonth(schedule.startDate, 28),
+    [schedule.startDate]
+  );
+
   // Generate 28 dates from schedule.startDate
   const dates = useMemo(() => {
     const result: { date: Date; dateString: string; isWeekStart: boolean }[] = [];
@@ -181,6 +187,15 @@ export function ScheduleGrid({
         <tbody>
           {staff.map((staffMember, rowIndex) => {
             const staffCounts = countShiftsByType(schedule.assignments, staffMember.id);
+            // Front portion N count: nights placed on or before the month-boundary date
+            const frontNightCount = frontEndDate
+              ? schedule.assignments.filter(
+                  (a) =>
+                    a.staffId === staffMember.id &&
+                    a.shift === 'N' &&
+                    a.date <= frontEndDate
+                ).length
+              : 0;
             const isLastRow = rowIndex === staff.length - 1;
             return (
               <tr key={staffMember.id} className="hover:bg-gray-50/50 transition-colors">
@@ -300,16 +315,21 @@ export function ScheduleGrid({
                     (() => {
                       const req = requiredNights?.[staffMember.id];
                       if (req != null && req > 0) {
-                        return staffCounts.N >= req ? 'text-purple-600' : 'text-red-500';
+                        return frontNightCount >= req ? 'text-purple-600' : 'text-red-500';
                       }
                       return 'text-purple-600';
                     })()
                   )}
+                  title={
+                    requiredNights?.[staffMember.id]
+                      ? `앞부분(${frontEndDate}까지) 나이트 ${frontNightCount}회 / 필요 ${requiredNights[staffMember.id]}회 · 28일 전체 ${staffCounts.N}회`
+                      : `28일 전체 나이트 ${staffCounts.N}회`
+                  }
                 >
                   {(() => {
                     const req = requiredNights?.[staffMember.id];
                     if (req != null && req > 0) {
-                      return `${staffCounts.N}/${req}`;
+                      return `${frontNightCount}/${req}`;
                     }
                     return staffCounts.N;
                   })()}

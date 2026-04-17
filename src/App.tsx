@@ -205,6 +205,7 @@ function App() {
                     <div className="pt-8 flex gap-2">
                       <RequiredNightsInput
                         staff={staff}
+                        startDate={schedule.startDate}
                         requiredNights={requiredNights}
                         onRequiredNightsChange={setRequiredNights}
                       />

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { Staff } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,29 +10,43 @@ import {
   DialogTrigger,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { splitWindowByMonth } from '@/utils/dateUtils';
 
 interface RequiredNightsInputProps {
   staff: Staff[];
+  startDate: string;
   requiredNights: Record<string, number>;
   onRequiredNightsChange: (requiredNights: Record<string, number>) => void;
 }
 
 export function RequiredNightsInput({
   staff,
+  startDate,
   requiredNights,
   onRequiredNightsChange,
 }: RequiredNightsInputProps) {
+  const { frontDays, frontEndDate } = useMemo(
+    () => splitWindowByMonth(startDate, 28),
+    [startDate]
+  );
+
+  const hasFrontPortion = frontDays > 0;
+  const inputMax = frontDays;
+
+  const clamp = (value: number) => Math.max(0, Math.min(inputMax, value));
+
   const updateStaffNights = (staffId: string, value: number) => {
     onRequiredNightsChange({
       ...requiredNights,
-      [staffId]: value,
+      [staffId]: clamp(value),
     });
   };
 
   const applyAll = (value: number) => {
+    const clamped = clamp(value);
     const updated: Record<string, number> = {};
     for (const s of staff) {
-      updated[s.id] = value;
+      updated[s.id] = clamped;
     }
     onRequiredNightsChange(updated);
   };
@@ -49,7 +64,17 @@ export function RequiredNightsInput({
         <DialogHeader>
           <DialogTitle>필요나이트 설정</DialogTitle>
           <DialogDescription>
-            28일 기간 동안 각 직원에게 필요한 나이트(N) 근무 횟수를 입력하세요.
+            {hasFrontPortion ? (
+              <>
+                윈도우 앞부분(<span className="font-medium">{startDate} ~ {frontEndDate}</span>, {frontDays}일)에
+                배치할 나이트(N) 개수를 직원별로 입력하세요. 이 구간은 이전 달의 뒷부분에 해당합니다.
+              </>
+            ) : (
+              <>
+                윈도우가 월 1일에 시작하여 앞부분(이전 달 뒷부분)이 없습니다.
+                이번 윈도우는 필요나이트를 설정할 필요가 없습니다.
+              </>
+            )}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -59,16 +84,15 @@ export function RequiredNightsInput({
             <Input
               type="number"
               min={0}
-              max={28}
+              max={inputMax}
+              disabled={!hasFrontPortion}
               className="w-20 h-8 text-center text-sm"
               placeholder="0"
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                if (val >= 0 && val <= 28) {
-                  applyAll(val);
-                }
-              }}
+              onChange={(e) => applyAll(Number(e.target.value))}
             />
+            {hasFrontPortion && (
+              <span className="text-xs text-muted-foreground">최대 {inputMax}</span>
+            )}
           </div>
           {/* Per-staff inputs */}
           {staff.map((staffMember) => (
@@ -77,15 +101,11 @@ export function RequiredNightsInput({
               <Input
                 type="number"
                 min={0}
-                max={28}
+                max={inputMax}
+                disabled={!hasFrontPortion}
                 className="w-20 h-8 text-center text-sm"
                 value={requiredNights[staffMember.id] ?? 0}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  if (val >= 0 && val <= 28) {
-                    updateStaffNights(staffMember.id, val);
-                  }
-                }}
+                onChange={(e) => updateStaffNights(staffMember.id, Number(e.target.value))}
               />
             </div>
           ))}
