@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Toaster, toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StaffList } from '@/components/StaffList';
@@ -13,15 +13,46 @@ import { LoginPrompt } from '@/components/LoginPrompt';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { UserMenu } from '@/components/UserMenu';
 import { GenerationCounter } from '@/components/GenerationCounter';
+import { Footer } from '@/components/Footer';
+import { PricingView } from '@/components/PricingView';
+import { TermsView } from '@/components/TermsView';
+import { PrivacyView } from '@/components/PrivacyView';
 import { useSchedule } from '@/hooks/useSchedule';
 import { useAuth } from '@/contexts/AuthContext';
 import { isApiConfigured, getLastRemainingCount } from '@/services/solverApi';
 import { GenerationLimitError } from '@/types/auth';
 
 function App() {
+  const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+  if (path === '/pricing') return <PricingView />;
+  if (path === '/terms') return <TermsView />;
+  if (path === '/privacy') return <PrivacyView />;
+
+  return <ScheduleApp />;
+}
+
+function ScheduleApp() {
   const { user, isAuthenticated } = useAuth();
-  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
-  const [upgradePromptOpen, setUpgradePromptOpen] = useState(false);
+  const [loginPromptOpen, setLoginPromptOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('signup') === '1';
+  });
+  const [upgradePromptOpen, setUpgradePromptOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const upgrade = new URLSearchParams(window.location.search).get('upgrade');
+    return upgrade === 'daypass' || upgrade === 'annual';
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('upgrade') || params.has('signup')) {
+      params.delete('upgrade');
+      params.delete('signup');
+      const cleaned = params.toString();
+      const newUrl = cleaned ? `${window.location.pathname}?${cleaned}` : window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, []);
 
   const {
     staff,
@@ -304,6 +335,7 @@ function App() {
           onOpenChange={setUpgradePromptOpen}
           onUpgrade={handleUpgrade}
         />
+        <Footer />
       </div>
     </ErrorBoundary>
   );
