@@ -121,7 +121,7 @@ export function LoginPrompt({ open, onOpenChange }: LoginPromptProps) {
             교대근무 자동 생성 서비스
           </DialogTitle>
           <DialogDescription className="text-center">
-            로그인하면 OR-Tools 기반 자동 스케줄링을 사용할 수 있습니다.
+            로그인하면 근무표 자동 생성 기능을 사용할 수 있습니다.
             매월 3회 무료로 제공됩니다.
           </DialogDescription>
         </DialogHeader>
