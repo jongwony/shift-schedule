@@ -1,6 +1,11 @@
 import { BUSINESS_INFO, SERVICE_INFO } from '@/config/business';
 
+const isPlaceholder = (value: string) => value.startsWith('PLACEHOLDER_');
+
 export function Footer() {
+  const showMailOrder = !isPlaceholder(BUSINESS_INFO.mailOrderRegistrationNumber);
+  const showPhone = !isPlaceholder(BUSINESS_INFO.phone);
+
   return (
     <footer className="mt-12 border-t border-gray-200 bg-gray-50">
       <div className="mx-auto max-w-6xl px-4 py-6 text-xs text-gray-600">
@@ -10,11 +15,13 @@ export function Footer() {
             <div>상호: {BUSINESS_INFO.companyName}</div>
             <div>대표: {BUSINESS_INFO.representative}</div>
             <div>사업자등록번호: {BUSINESS_INFO.businessRegistrationNumber}</div>
-            <div>통신판매업 신고번호: {BUSINESS_INFO.mailOrderRegistrationNumber}</div>
+            {showMailOrder && (
+              <div>통신판매업 신고번호: {BUSINESS_INFO.mailOrderRegistrationNumber}</div>
+            )}
           </div>
           <div className="space-y-1">
             <div>주소: {BUSINESS_INFO.address}</div>
-            <div>전화: {BUSINESS_INFO.phone}</div>
+            {showPhone && <div>전화: {BUSINESS_INFO.phone}</div>}
             <div>
               이메일: <a href={`mailto:${BUSINESS_INFO.email}`} className="underline hover:text-gray-900">{BUSINESS_INFO.email}</a>
             </div>

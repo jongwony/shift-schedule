@@ -7,30 +7,31 @@
 
 export const BUSINESS_INFO = {
   // 상호명 (Business Name)
-  companyName: 'PLACEHOLDER_상호명',
+  companyName: '루트프로토',
 
   // 대표자명 (Representative)
-  representative: 'PLACEHOLDER_대표자명',
+  representative: '최종원',
 
   // 사업자등록번호 (Business Registration Number, 10 digits with hyphens)
-  businessRegistrationNumber: 'PLACEHOLDER_000-00-00000',
+  businessRegistrationNumber: '790-53-01184',
 
   // 통신판매업 신고번호 (Mail-Order Sales Registration Number)
-  mailOrderRegistrationNumber: 'PLACEHOLDER_제0000-서울XX구-0000호',
+  // TODO: 통신판매업 신고 후 신고번호 기재 (예: 제2026-부산기장-0000호)
+  mailOrderRegistrationNumber: 'PLACEHOLDER_통신판매업_신고번호',
 
   // 사업장 주소 (Business Address)
-  address: 'PLACEHOLDER_서울특별시 XX구 XX로 00 (00동, 00빌딩 0층)',
+  address: '부산광역시 기장군 기장읍 읍내로 56, 3층 (두원인테리어)',
 
-  // 유선 전화번호 (Landline)
-  phone: 'PLACEHOLDER_02-0000-0000',
+  // 연락처 (대표 번호 — 유선·휴대 통일)
+  phone: '010-8514-0289',
 
-  // 대표 이메일 (Customer Service Email)
-  email: 'support@connects.im',
+  // 대표 이메일 (Customer Service + Privacy Officer 겸용)
+  email: 'choi@rootproto.com',
 
   // 개인정보 보호책임자 (Privacy Officer)
   privacyOfficer: {
-    name: 'PLACEHOLDER_보호책임자명',
-    email: 'privacy@connects.im',
+    name: '최종원',
+    email: 'choi@rootproto.com',
   },
 
   // 호스팅 (Hosting Provider)

@@ -190,6 +190,12 @@ function ScheduleApp() {
             </h1>
             <nav aria-label="주요 기능">
               <div className="flex items-center gap-2">
+                <a
+                  href="/pricing"
+                  className="px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 hover:underline transition-colors"
+                >
+                  요금제
+                </a>
                 {isAuthenticated && user && (
                   <>
                     <GenerationCounter
