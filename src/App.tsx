@@ -41,7 +41,7 @@ function ScheduleApp() {
   const [upgradePromptOpen, setUpgradePromptOpen] = useState(() => {
     if (typeof window === 'undefined') return false;
     const upgrade = new URLSearchParams(window.location.search).get('upgrade');
-    return upgrade === 'daypass' || upgrade === 'annual';
+    return upgrade === 'daypass';
   });
 
   useEffect(() => {
@@ -102,10 +102,10 @@ function ScheduleApp() {
     }
   };
 
-  const handleUpgrade = (type: 'daypass' | 'annual') => {
+  const handleUpgrade = (type: 'daypass') => {
     setUpgradePromptOpen(false);
     // TODO: integrate TossPayments checkout flow
-    toast.info(`${type === 'annual' ? '연간 구독' : '데이 패스'} 결제 준비 중`);
+    toast.info(`${type === 'daypass' ? '데이 패스' : ''} 결제 준비 중`);
   };
 
   // Export handler - TSV to clipboard for spreadsheet paste
@@ -204,6 +204,7 @@ function ScheduleApp() {
                     <GenerationCounter
                       remaining={getLastRemainingCount()}
                       plan={user.plan}
+                      dayPassExpiry={user.dayPassExpiry}
                     />
                     <UserMenu user={user} />
                   </>
