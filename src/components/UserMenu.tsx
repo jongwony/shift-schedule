@@ -15,7 +15,7 @@ interface UserMenuProps {
 const PLAN_LABELS: Record<string, string> = {
   free: '무료',
   daypass: 'Day Pass',
-  annual: 'Annual',
+  unlimited: '테스트 계정',
 };
 
 export function UserMenu({ user }: UserMenuProps) {
@@ -88,8 +88,8 @@ export function UserMenu({ user }: UserMenuProps) {
             <div className="mt-0.5">
               <span
                 className={
-                  user.plan === 'annual'
-                    ? 'text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700'
+                  user.plan === 'unlimited'
+                    ? 'text-xs font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200'
                     : user.plan === 'daypass'
                       ? 'text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700'
                       : 'text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600'
@@ -97,6 +97,11 @@ export function UserMenu({ user }: UserMenuProps) {
               >
                 {planLabel}
               </span>
+              {user.plan === 'daypass' && user.dayPassExpiry == null && (
+                <span className="ml-1 text-[10px] text-amber-700">
+                  활성화 대기
+                </span>
+              )}
             </div>
           </div>
 
