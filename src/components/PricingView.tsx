@@ -52,7 +52,7 @@ export function PricingView() {
               '관심 있으시면 운영자에게 문의',
             ]}
             cta="평생 사용 문의"
-            ctaHref={null}
+            disabled
             highlight={false}
           />
         </div>
@@ -111,12 +111,12 @@ interface PlanCardProps {
   period: string;
   features: string[];
   cta: string;
-  ctaHref: string | null;
+  ctaHref?: string;
+  disabled?: boolean;
   highlight: boolean;
 }
 
-function PlanCard({ name, price, period, features, cta, ctaHref, highlight }: PlanCardProps) {
-  const disabled = ctaHref === null;
+function PlanCard({ name, price, period, features, cta, ctaHref, disabled = false, highlight }: PlanCardProps) {
   const containerClass = disabled
     ? 'border-gray-200 bg-gray-50'
     : highlight
