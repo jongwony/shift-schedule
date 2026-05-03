@@ -11,14 +11,10 @@ export interface AuthUser {
   plan: Plan;
   generationCount: number;
   generationMonth: string;
-  subscriptionStatus: SubscriptionStatus | null;
-  subscriptionEndDate: string | null;
   dayPassExpiry: string | null;
 }
 
-export type Plan = 'free' | 'daypass' | 'annual';
-
-export type SubscriptionStatus = 'active' | 'cancelled' | 'expired';
+export type Plan = 'free' | 'daypass' | 'unlimited';
 
 export interface AuthTokens {
   accessToken: string;
@@ -40,12 +36,7 @@ export interface RefreshResponse {
 export interface PaymentConfirmRequest {
   paymentKey: string;
   orderId: string;
-  productType: 'daypass' | 'annual';
-}
-
-export interface BillingIssueRequest {
-  authKey: string;
-  customerKey: string;
+  productType: 'daypass';
 }
 
 export interface PaymentConfirmResponse {
@@ -69,7 +60,7 @@ export interface GenerationLimitInfo {
 }
 
 export interface PlanOption {
-  type: 'daypass' | 'annual';
+  type: 'daypass';
   price: number;
   currency: string;
   duration?: string;
