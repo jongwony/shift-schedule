@@ -10,7 +10,8 @@ Start both frontend (Vite) and backend (Chalice) servers for local testing.
 
 1. Start the **backend server** in background:
    - Directory: `../api`
-   - Command: `source .venv/bin/activate && chalice local`
+   - Command: `source .venv/bin/activate && CHALICE_LOCAL=1 chalice local`
+   - `CHALICE_LOCAL=1` makes shift-schedule routes allow any origin (CORS), so localhost:5173 isn't blocked
    - Run in background with `run_in_background: true`
 
 2. Start the **frontend server** in background:
