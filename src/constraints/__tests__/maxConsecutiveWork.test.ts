@@ -44,6 +44,7 @@ function createTestContext(
       consecutiveNight: true,
       staffing: true,
       weeklyOff: true,
+      juhu: true,
     },
     constraintSeverity: {
       shiftOrder: 'hard',
