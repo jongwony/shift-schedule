@@ -94,7 +94,7 @@ export function FeasibilityResult({ result, completeness = 0, preCheckResult, ge
     <div
       className={cn(
         'p-6 rounded-xl border-2 shadow-sm transition-all duration-300',
-        result.feasible
+        result.feasible && !hasDiagnosis
           ? 'bg-emerald-50 border-emerald-200'
           : 'bg-red-50 border-red-200'
       )}
@@ -104,7 +104,26 @@ export function FeasibilityResult({ result, completeness = 0, preCheckResult, ge
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {result.feasible ? (
+          {hasDiagnosis ? (
+            <>
+              <span
+                className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100"
+                aria-hidden="true"
+              >
+                <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </span>
+              <div>
+                <span className="block text-2xl font-bold text-red-700">
+                  생성 불가
+                </span>
+                <span className="text-sm text-red-600">
+                  솔버가 완성 가능한 근무표를 찾지 못했습니다
+                </span>
+              </div>
+            </>
+          ) : result.feasible ? (
             <>
               <span
                 className="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100"
@@ -171,6 +190,12 @@ export function FeasibilityResult({ result, completeness = 0, preCheckResult, ge
           )}
         </div>
       </div>
+
+      {hasDiagnosis && (
+        <p className="mt-3 text-xs text-gray-500">
+          위 배지는 입력표(수동 입력) 검사 결과이며, 자동 생성 가능 여부와는 별개입니다.
+        </p>
+      )}
 
       {/* Pre-check analysis detail */}
       {preCheckResult && !preCheckResult.feasible && preCheckResult.reasons.length > 0 && (
