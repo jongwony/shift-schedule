@@ -520,6 +520,7 @@ export function useSchedule() {
         weeklyStaffing: config.weeklyStaffing,
         constraintSeverity: config.constraintSeverity,
         softConstraints: config.softConstraints,
+        enableJuhu: config.enabledConstraints.juhu,
         requiredNights,
       },
     };

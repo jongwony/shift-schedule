@@ -158,6 +158,7 @@ export function getDefaultConfig(): ConstraintConfig {
       consecutiveNight: true,
       staffing: true,
       weeklyOff: true,
+      juhu: true,
     },
     constraintSeverity: {
       shiftOrder: 'hard',
