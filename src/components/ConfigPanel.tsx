@@ -12,7 +12,11 @@ interface ConfigPanelProps {
 
 type ConstraintKey = keyof ConstraintConfig['enabledConstraints'];
 
-const CONSTRAINT_LABELS: Record<ConstraintKey, string> = {
+// Constraints shown in the hard/soft severity group. `juhu` is excluded: it is
+// a standalone global toggle without a severity concept (rendered separately).
+type SeverityConstraintKey = Exclude<ConstraintKey, 'juhu'>;
+
+const CONSTRAINT_LABELS: Record<SeverityConstraintKey, string> = {
   shiftOrder: '역순 금지 (D-E-N 순서)',
   nightOffDay: 'N-OFF-D 금지',
   consecutiveNight: '연속 나이트 제한',
@@ -35,7 +39,7 @@ export function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
     });
   };
 
-  const toggleSeverity = (key: ConstraintKey) => {
+  const toggleSeverity = (key: SeverityConstraintKey) => {
     const currentSeverity = config.constraintSeverity?.[key] ?? 'hard';
     const newSeverity: ConstraintSeverity = currentSeverity === 'hard' ? 'soft' : 'hard';
     onConfigChange({
@@ -189,7 +193,7 @@ export function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {(Object.keys(CONSTRAINT_LABELS) as ConstraintKey[]).map((key) => {
+            {(Object.keys(CONSTRAINT_LABELS) as SeverityConstraintKey[]).map((key) => {
               const isEnabled = config.enabledConstraints[key];
               const severity = config.constraintSeverity?.[key] ?? 'hard';
               const isHard = severity === 'hard';
@@ -231,6 +235,36 @@ export function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
                 </div>
               );
             })}
+
+            {/* 주휴: 전역 토글 (Hard/Soft severity 개념 없음) */}
+            <div
+              className={cn(
+                'flex flex-col gap-1 p-2 mt-2 rounded-lg border transition-colors',
+                config.enabledConstraints.juhu
+                  ? 'bg-white border-gray-200'
+                  : 'bg-gray-50 border-gray-100'
+              )}
+            >
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.enabledConstraints.juhu}
+                  onChange={() => toggleConstraint('juhu')}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <span
+                  className={cn(
+                    'text-sm',
+                    !config.enabledConstraints.juhu && 'text-gray-400'
+                  )}
+                >
+                  주휴 자동 배정 (주 1회 고정 휴무)
+                </span>
+              </label>
+              <span className="text-[11px] text-muted-foreground pl-6">
+                끄면 주휴를 배정하지 않습니다 (주간 최소 휴무는 유지).
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>

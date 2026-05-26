@@ -35,6 +35,13 @@ export interface GenerateRequest {
     constraintSeverity?: ApiConstraintSeverity;
     softConstraints?: SoftConstraintConfig;
     /**
+     * Global toggle for solver-determined weekly holiday (주휴). Default true.
+     * When false, the solver skips juhu assignment entirely (no per-staff
+     * recurring OFF weekday, no distribution objective); the independent
+     * weekly-minimum-OFF requirement is unaffected.
+     */
+    enableJuhu?: boolean;
+    /**
      * Required nights per staff in the window's front portion (= start-month tail).
      * Solver adds hard constraint: sum(N in front portion) == count (when count > 0).
      * Absent or 0 value means unconstrained.
@@ -61,6 +68,8 @@ export interface FeasibilityCheckRequest {
     weeklyWorkHours: number;
     weeklyStaffing: WeeklyStaffing[];
     constraintSeverity?: ApiConstraintSeverity;
+    /** Global toggle for solver-determined weekly holiday (주휴). Default true. */
+    enableJuhu?: boolean;
   };
 }
 

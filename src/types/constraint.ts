@@ -86,6 +86,12 @@ export interface ConstraintConfig {
     consecutiveNight: boolean;
     staffing: boolean;
     weeklyOff: boolean;
+    /**
+     * Global toggle for solver-determined weekly holiday (주휴). Backend-only:
+     * sent to the solver as `enableJuhu`. There is no local constraint check
+     * and no hard/soft severity (intentionally absent from constraintSeverity).
+     */
+    juhu: boolean;
   };
   /** User-configurable severity per constraint (hard = error, soft = warning) */
   constraintSeverity: {
