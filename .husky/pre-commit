@@ -1,0 +1,4 @@
+# Type-check the whole project (incl. tests) before committing.
+# Mirrors the `tsc -b` step of the Pages deploy build, which type-checks
+# test files — catches errors vitest (esbuild, no type-check) misses.
+npm run typecheck
