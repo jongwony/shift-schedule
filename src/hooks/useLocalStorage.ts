@@ -2,7 +2,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
  * Deep merge two objects. Values from `source` override `target`.
- * New keys in `target` (not in `source`) are preserved.
+ * New keys in `target` (not in `source`) are preserved (forward-compat: new schema fields).
+ * Keys only in `source` (not in `target`) are also preserved — e.g. dynamic-keyed records
+ * like `cellExclusions` / `requiredNights` whose keys never appear in the static default.
+ * Legacy field removal is handled by version-gated migration (see migrateStorageIfNeeded),
+ * not by this merge, so preserving source-only keys does not resurrect deprecated fields.
  */
 function deepMerge<T>(target: T, source: Partial<T>): T {
   if (target === null || typeof target !== 'object' || Array.isArray(target)) {
@@ -13,7 +17,11 @@ function deepMerge<T>(target: T, source: Partial<T>): T {
   }
 
   const result = { ...target } as Record<string, unknown>;
-  for (const key of Object.keys(target as object)) {
+  const allKeys = new Set([
+    ...Object.keys(target as object),
+    ...Object.keys(source as object),
+  ]);
+  for (const key of allKeys) {
     if (key in source) {
       const targetVal = (target as Record<string, unknown>)[key];
       const sourceVal = (source as Record<string, unknown>)[key];
