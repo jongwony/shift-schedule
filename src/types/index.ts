@@ -22,6 +22,7 @@ export type {
 export type {
   GenerationStatus,
   ApiError,
+  InfeasibilityDiagnosis,
   GenerateRequest,
   GenerateResponse,
   FeasibilityCheckResponse,

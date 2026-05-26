@@ -9,6 +9,7 @@ import type {
   FeasibilityResult,
   GenerationStatus,
   FeasibilityCheckResponse,
+  InfeasibilityDiagnosis,
 } from '@/types';
 import { GenerationLimitError } from '@/types/auth';
 import { checkFeasibility, getDefaultConfig } from '@/solver/feasibilityChecker';
@@ -189,6 +190,9 @@ export function useSchedule() {
 
   // Pre-check result for displaying analysis
   const [preCheckResult, setPreCheckResult] = useState<FeasibilityCheckResponse | null>(null);
+
+  // UNSAT-core diagnosis from a /generate INFEASIBLE response (solver-only conflicts)
+  const [generateDiagnosis, setGenerateDiagnosis] = useState<InfeasibilityDiagnosis | null>(null);
 
   // Show all soft violations (triggered by auto-generation or user toggle)
   const [showAllViolations, setShowAllViolations] = useState(false);
@@ -521,6 +525,7 @@ export function useSchedule() {
     };
 
     try {
+      setGenerateDiagnosis(null); // Clear stale diagnosis from a prior attempt
       // Pre-check feasibility before generation
       const checkResult = await checkFeasibilityApi(requestPayload);
       setPreCheckResult(checkResult);
@@ -574,6 +579,7 @@ export function useSchedule() {
         setGenerationStatus('success');
         setShowAllViolations(true);
         setPreCheckResult(null); // Clear pre-check result on success
+        setGenerateDiagnosis(null);
         const lockedCount = lockedAssignments.length;
         const message = lockedCount > 0
           ? `근무표가 자동 생성되었습니다. (고정: ${lockedCount}개)`
@@ -581,6 +587,7 @@ export function useSchedule() {
         toast.success(message);
       } else {
         setGenerationStatus('error');
+        setGenerateDiagnosis(response.error?.diagnosis ?? null);
         const errorMessage = response.error?.message ?? '알 수 없는 오류가 발생했습니다.';
         toast.error(`생성 실패: ${errorMessage}`);
       }
@@ -644,6 +651,7 @@ export function useSchedule() {
     scheduleCompleteness,
     generationStatus,
     preCheckResult,
+    generateDiagnosis,
     editingCell,
     hoveredCell,
     affectedCells,

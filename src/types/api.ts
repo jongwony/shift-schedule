@@ -3,9 +3,17 @@ import type { EligibleShift } from './staff';
 
 export type GenerationStatus = 'idle' | 'loading' | 'success' | 'error';
 
+/** UNSAT-core diagnosis attached to an INFEASIBLE error (Korean label strings) */
+export interface InfeasibilityDiagnosis {
+  conflictingConstraints: string[];
+  conflictingInputs: string[];
+}
+
 export interface ApiError {
   code: 'INFEASIBLE' | 'TIMEOUT' | 'INVALID_INPUT';
   message: string;
+  /** Present when the solver could pinpoint conflicting inputs/constraints */
+  diagnosis?: InfeasibilityDiagnosis;
 }
 
 /** Constraint severity configuration for API requests */
