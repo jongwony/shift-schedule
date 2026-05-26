@@ -106,4 +106,17 @@ describe('useLocalStorage restore (deep merge)', () => {
     const { result } = renderHook(() => useLocalStorage(KEY, { a: 'default' }));
     expect(result.current[0].a).toBe('stored');
   });
+
+  it('does not let a tampered __proto__ key pollute the restored object prototype', () => {
+    // JSON.parse makes "__proto__" an own-enumerable key; iterating source keys must not
+    // route it through result[key] = ... and reassign the prototype.
+    localStorage.setItem(KEY, '{"a":2,"__proto__":{"polluted":true}}');
+    const { result } = renderHook(() => useLocalStorage(KEY, { a: 1 }));
+    const restored = result.current[0] as Record<string, unknown>;
+    expect(restored.a).toBe(2);
+    expect('polluted' in restored).toBe(false);
+    expect(Object.getPrototypeOf(restored)).toBe(Object.prototype);
+    // global prototype must remain clean as well
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
 });

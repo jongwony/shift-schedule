@@ -22,6 +22,12 @@ function deepMerge<T>(target: T, source: Partial<T>): T {
     ...Object.keys(source as object),
   ]);
   for (const key of allKeys) {
+    // Skip prototype-polluting keys: now that source keys are iterated, a tampered/corrupt
+    // stored value could carry an own `__proto__`/`constructor` key (JSON.parse makes these
+    // own-enumerable) and reassign the restored object's prototype via result[key] = ...
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+      continue;
+    }
     if (key in source) {
       const targetVal = (target as Record<string, unknown>)[key];
       const sourceVal = (source as Record<string, unknown>)[key];
