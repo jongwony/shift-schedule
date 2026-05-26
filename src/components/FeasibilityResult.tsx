@@ -1,4 +1,4 @@
-import type { FeasibilityResult as FeasibilityResultType, FeasibilityCheckResponse } from '@/types';
+import type { FeasibilityResult as FeasibilityResultType, FeasibilityCheckResponse, InfeasibilityDiagnosis } from '@/types';
 import { cn } from '@/lib/utils';
 
 interface FeasibilityResultProps {
@@ -7,13 +7,20 @@ interface FeasibilityResultProps {
   completeness?: number;
   /** Pre-check result from backend API */
   preCheckResult?: FeasibilityCheckResponse | null;
+  /** UNSAT-core diagnosis from a /generate INFEASIBLE response (solver-only conflicts) */
+  generateDiagnosis?: InfeasibilityDiagnosis | null;
 }
 
 const COMPLETENESS_THRESHOLD = 0.5;
 
-export function FeasibilityResult({ result, completeness = 0, preCheckResult }: FeasibilityResultProps) {
+export function FeasibilityResult({ result, completeness = 0, preCheckResult, generateDiagnosis }: FeasibilityResultProps) {
+  const hasDiagnosis =
+    !!generateDiagnosis &&
+    (generateDiagnosis.conflictingInputs.length > 0 || generateDiagnosis.conflictingConstraints.length > 0);
+
   // Show progress state when schedule is below threshold
-  if (result && completeness < COMPLETENESS_THRESHOLD) {
+  // (but fall through to surface a solver diagnosis even on a sparse grid)
+  if (result && completeness < COMPLETENESS_THRESHOLD && !hasDiagnosis) {
     const percentage = Math.round(completeness * 100);
     return (
       <div
@@ -183,6 +190,33 @@ export function FeasibilityResult({ result, completeness = 0, preCheckResult }: 
               <span>필요: {preCheckResult.analysis.totalRequired} person-days</span>
               <span>가용: {preCheckResult.analysis.totalAvailable} person-days</span>
               <span>주당 OFF: {preCheckResult.analysis.offDaysRequired}일</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Solver UNSAT-core diagnosis: conflicts only the solver can detect */}
+      {hasDiagnosis && generateDiagnosis && (
+        <div className="mt-4 pt-4 border-t border-red-200">
+          <p className="text-sm font-semibold text-red-700 mb-2">생성 실패 원인 (솔버 진단)</p>
+          {generateDiagnosis.conflictingInputs.length > 0 && (
+            <div className="mb-2">
+              <p className="text-xs font-medium text-red-600 mb-1">충돌하는 입력</p>
+              <ul className="list-disc list-inside text-sm text-red-800 space-y-0.5">
+                {generateDiagnosis.conflictingInputs.map((item, i) => (
+                  <li key={`in-${i}`}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {generateDiagnosis.conflictingConstraints.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-red-600 mb-1">충돌하는 제약</p>
+              <ul className="list-disc list-inside text-sm text-red-800 space-y-0.5">
+                {generateDiagnosis.conflictingConstraints.map((item, i) => (
+                  <li key={`ct-${i}`}>{item}</li>
+                ))}
+              </ul>
             </div>
           )}
         </div>

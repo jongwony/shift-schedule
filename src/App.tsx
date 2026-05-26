@@ -65,6 +65,7 @@ function ScheduleApp() {
     scheduleCompleteness,
     generationStatus,
     preCheckResult,
+    generateDiagnosis,
     editingCell,
     affectedCells,
     showAllViolations,
@@ -333,7 +334,7 @@ function ScheduleApp() {
           {/* Feasibility result - always visible */}
           <section aria-label="타당성 검사 결과" className="mt-6 space-y-4">
             <ErrorBoundary>
-              <FeasibilityResult result={feasibilityResult} completeness={scheduleCompleteness} preCheckResult={preCheckResult} />
+              <FeasibilityResult result={feasibilityResult} completeness={scheduleCompleteness} preCheckResult={preCheckResult} generateDiagnosis={generateDiagnosis} />
               {feasibilityResult && feasibilityResult.violations.length > 0 && (
                 <ViolationList
                   violations={feasibilityResult.violations}
