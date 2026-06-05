@@ -227,8 +227,9 @@ source .venv/bin/activate && chalice local
   2. Add type to `SoftConstraintConfig` in `src/types/constraint.ts`
   3. Add default in `getDefaultConfig()` under `softConstraints`
   4. Register in `src/constraints/index.ts`
-  5. Backend: Create `../api/chalicelib/soft_constraints/{snake_case}.py` implementing `SoftConstraint` protocol
-  6. Register in `soft_constraints/__init__.py`
+  5. Register UI toggle in `src/components/SoftConstraintSettings.tsx` (add a `ConstraintInfo` entry to `WORKER_CONSTRAINTS` or `MANAGER_CONSTRAINTS` with matching `id`/`tier`) — the settings list is hardcoded, so without this the constraint runs (default-enabled) but has no user-facing toggle
+  6. Backend: Create `../api/chalicelib/soft_constraints/{snake_case}.py` implementing `SoftConstraint` protocol
+  7. Register in `soft_constraints/__init__.py`
 - When adding **boundary-aware** soft constraint (considers previous period):
   1. Frontend: Use Map-based lookup with `_count_trailing_*` or similar helper
   2. Backend: Extract `previous_period_end` from context, build `shift_by_date` Map
