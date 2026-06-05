@@ -89,6 +89,13 @@ const WORKER_CONSTRAINTS: ConstraintInfo[] = [
     perspective: 'worker',
   },
   {
+    id: 'dayShiftFairness',
+    name: '데이공정성',
+    description: '데이 근무 공정 분배',
+    tier: 3,
+    perspective: 'worker',
+  },
+  {
     id: 'shiftContinuity',
     name: '근무연속성',
     description: '동일 근무 연속 유지',
