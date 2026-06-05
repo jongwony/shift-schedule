@@ -63,6 +63,7 @@ function createTestContext(
       restClustering: { enabled: true },
       postRestDayShift: { enabled: true },
       weekendFairness: { enabled: true },
+      dayShiftFairness: { enabled: true },
       shiftContinuity: { enabled: true },
     },
   };

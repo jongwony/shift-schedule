@@ -181,6 +181,7 @@ export function getDefaultConfig(): ConstraintConfig {
       postRestDayShift: { enabled: true },
       // Tier 3 - Quality of life
       weekendFairness: { enabled: true },
+      dayShiftFairness: { enabled: true },
       shiftContinuity: { enabled: true },
     },
   };

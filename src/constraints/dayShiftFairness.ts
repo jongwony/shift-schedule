@@ -1,0 +1,91 @@
+import { parseISO, addDays, format } from 'date-fns';
+import type { Violation, ShiftAssignment } from '@/types';
+import type { Constraint, ConstraintContext } from './types';
+
+function getShiftForStaffOnDate(
+  assignments: ShiftAssignment[],
+  staffId: string,
+  date: string
+): string | null {
+  const assignment = assignments.find(
+    (a) => a.staffId === staffId && a.date === date
+  );
+  return assignment?.shift ?? null;
+}
+
+export const dayShiftFairnessConstraint: Constraint = {
+  id: 'day-shift-fairness',
+  name: '데이공정성',
+  description: '데이 근무 분배 공정성 확인',
+  severityType: 'soft',
+
+  check(context: ConstraintContext) {
+    const { schedule, staff, config } = context;
+    const violations: Violation[] = [];
+
+    const softConfig = config.softConstraints?.dayShiftFairness;
+    if (!softConfig?.enabled) {
+      return { satisfied: true, violations: [] };
+    }
+
+    const startDate = parseISO(schedule.startDate);
+    const periodDays = 28;
+
+    // Count day (D) shifts for each staff member
+    const dayShiftCounts: Map<string, number> = new Map();
+
+    for (const staffMember of staff) {
+      let dayShifts = 0;
+
+      for (let i = 0; i < periodDays; i++) {
+        const currentDate = addDays(startDate, i);
+        const currentDateStr = format(currentDate, 'yyyy-MM-dd');
+
+        const shift = getShiftForStaffOnDate(
+          schedule.assignments,
+          staffMember.id,
+          currentDateStr
+        );
+
+        if (shift === 'D') {
+          dayShifts++;
+        }
+      }
+
+      dayShiftCounts.set(staffMember.id, dayShifts);
+    }
+
+    // Calculate average and check for significant deviation
+    const counts = Array.from(dayShiftCounts.values());
+    if (counts.length === 0) {
+      return { satisfied: true, violations: [] };
+    }
+
+    const average = counts.reduce((a, b) => a + b, 0) / counts.length;
+    const threshold = 2; // Deviation threshold
+
+    for (const staffMember of staff) {
+      const count = dayShiftCounts.get(staffMember.id) ?? 0;
+      const deviation = count - average;
+
+      // Only flag if significantly above average (working too many day shifts)
+      if (deviation > threshold) {
+        violations.push({
+          constraintId: 'day-shift-fairness',
+          constraintName: '데이공정성',
+          severity: 'warning',
+          message: `${staffMember.name}: 데이 근무 ${count}일 (평균 ${average.toFixed(1)}일 대비 ${deviation.toFixed(1)}일 초과)`,
+          context: {
+            staffId: staffMember.id,
+            staffName: staffMember.name,
+          },
+        });
+      }
+    }
+
+    return {
+      satisfied: violations.length === 0,
+      violations,
+    };
+  },
+};

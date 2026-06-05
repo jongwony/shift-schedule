@@ -73,6 +73,7 @@ export interface SoftConstraintConfig {
   postRestDayShift: SoftConstraintItemConfig;
   // Tier 3 - Quality of life
   weekendFairness: SoftConstraintItemConfig;
+  dayShiftFairness: SoftConstraintItemConfig;
   shiftContinuity: SoftConstraintItemConfig;
 }
 

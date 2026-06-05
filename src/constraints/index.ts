@@ -16,6 +16,7 @@ import { restClusteringConstraint } from './restClustering';
 import { postRestDayShiftConstraint } from './postRestDayShift';
 // Soft constraints - Quality of life
 import { weekendFairnessConstraint } from './weekendFairness';
+import { dayShiftFairnessConstraint } from './dayShiftFairness';
 import { shiftContinuityConstraint } from './shiftContinuity';
 import type { Constraint } from './types';
 
@@ -39,6 +40,7 @@ export const constraintRegistry: Constraint[] = [
   postRestDayShiftConstraint,
   // Soft constraints - Quality of life (T3)
   weekendFairnessConstraint,
+  dayShiftFairnessConstraint,
   shiftContinuityConstraint,
 ];
 
@@ -60,6 +62,7 @@ export { restClusteringConstraint } from './restClustering';
 export { postRestDayShiftConstraint } from './postRestDayShift';
 // Soft constraints - Quality of life
 export { weekendFairnessConstraint } from './weekendFairness';
+export { dayShiftFairnessConstraint } from './dayShiftFairness';
 export { shiftContinuityConstraint } from './shiftContinuity';
 
 export type { Constraint, ConstraintContext, ConstraintResult, ConstraintSeverityType } from './types';
