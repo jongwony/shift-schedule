@@ -72,7 +72,8 @@ export interface SoftConstraintConfig {
   restClustering: SoftConstraintItemConfig;
   postRestDayShift: SoftConstraintItemConfig;
   // Tier 3 - Quality of life
-  weekendFairness: SoftConstraintItemConfig;
+  totalWorkFairness: SoftConstraintItemConfig;
+  dayShiftFairness: SoftConstraintItemConfig;
   shiftContinuity: SoftConstraintItemConfig;
 }
 
