@@ -626,10 +626,20 @@ export function useSchedule() {
         throw new Error('Invalid export file format');
       }
 
-      // Import all data
+      // Import all data. Deep-merge the imported config onto the current
+      // defaults so older exports (missing newer keys, e.g. the fairness
+      // constraints) don't install a partial config that crashes the settings
+      // panel or silently disables newer checks.
+      const defaults = getDefaultConfig();
       setStaff(data.staff);
       setSchedule(data.schedule);
-      setConfig(data.config);
+      setConfig({
+        ...defaults,
+        ...data.config,
+        enabledConstraints: { ...defaults.enabledConstraints, ...data.config.enabledConstraints },
+        constraintSeverity: { ...defaults.constraintSeverity, ...data.config.constraintSeverity },
+        softConstraints: { ...defaults.softConstraints, ...data.config.softConstraints },
+      });
       setPreviousPeriodEnd(data.previousPeriodEnd ?? []);
 
       toast.success('데이터를 성공적으로 불러왔습니다.');
