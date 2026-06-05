@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import type { Staff } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,28 +9,23 @@ import {
   DialogTrigger,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { splitWindowByMonth } from '@/utils/dateUtils';
+
+// requiredNights applies over the FULL scheduling window (consistent with every
+// other criterion); calendar month length 28-31 does not change the target.
+const WINDOW_DAYS = 28;
 
 interface RequiredNightsInputProps {
   staff: Staff[];
-  startDate: string;
   requiredNights: Record<string, number>;
   onRequiredNightsChange: (requiredNights: Record<string, number>) => void;
 }
 
 export function RequiredNightsInput({
   staff,
-  startDate,
   requiredNights,
   onRequiredNightsChange,
 }: RequiredNightsInputProps) {
-  const { frontDays, frontEndDate } = useMemo(
-    () => splitWindowByMonth(startDate, 28),
-    [startDate]
-  );
-
-  const hasFrontPortion = frontDays > 0;
-  const inputMax = frontDays;
+  const inputMax = WINDOW_DAYS;
 
   const clamp = (value: number) => Math.max(0, Math.min(inputMax, value));
 
@@ -64,17 +58,8 @@ export function RequiredNightsInput({
         <DialogHeader>
           <DialogTitle>필요나이트 설정</DialogTitle>
           <DialogDescription>
-            {hasFrontPortion ? (
-              <>
-                윈도우 앞부분(<span className="font-medium">{startDate} ~ {frontEndDate}</span>, {frontDays}일)에
-                배치할 나이트(N) 개수를 직원별로 입력하세요. 이 구간은 이전 달의 뒷부분에 해당합니다.
-              </>
-            ) : (
-              <>
-                윈도우가 월 1일에 시작하여 앞부분(이전 달 뒷부분)이 없습니다.
-                이번 윈도우는 필요나이트를 설정할 필요가 없습니다.
-              </>
-            )}
+            윈도우 전체(28일)에 배치할 나이트(N) 개수를 직원별로 입력하세요.
+            솔버가 이 개수를 정확히 충족하도록 강제합니다.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -85,14 +70,11 @@ export function RequiredNightsInput({
               type="number"
               min={0}
               max={inputMax}
-              disabled={!hasFrontPortion}
               className="w-20 h-8 text-center text-sm"
               placeholder="0"
               onChange={(e) => applyAll(Number(e.target.value))}
             />
-            {hasFrontPortion && (
-              <span className="text-xs text-muted-foreground">최대 {inputMax}</span>
-            )}
+            <span className="text-xs text-muted-foreground">최대 {inputMax}</span>
           </div>
           {/* Per-staff inputs */}
           {staff.map((staffMember) => (
@@ -102,7 +84,6 @@ export function RequiredNightsInput({
                 type="number"
                 min={0}
                 max={inputMax}
-                disabled={!hasFrontPortion}
                 className="w-20 h-8 text-center text-sm"
                 value={requiredNights[staffMember.id] ?? 0}
                 onChange={(e) => updateStaffNights(staffMember.id, Number(e.target.value))}
