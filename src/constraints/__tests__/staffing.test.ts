@@ -65,7 +65,8 @@ function createTestContext(
       maxSameShiftConsecutive: { enabled: true },
       restClustering: { enabled: true },
       postRestDayShift: { enabled: true },
-      weekendFairness: { enabled: true },
+      totalWorkFairness: { enabled: true },
+      dayShiftFairness: { enabled: true },
       shiftContinuity: { enabled: true },
     },
   };

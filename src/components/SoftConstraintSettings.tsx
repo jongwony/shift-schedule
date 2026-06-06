@@ -82,9 +82,16 @@ const WORKER_CONSTRAINTS: ConstraintInfo[] = [
   },
   // Tier 3 - Quality of Life
   {
-    id: 'weekendFairness',
-    name: '주말공정성',
-    description: '주말 근무 공정 분배',
+    id: 'totalWorkFairness',
+    name: '총근무공정성',
+    description: '총 근무일수 공정 분배',
+    tier: 3,
+    perspective: 'worker',
+  },
+  {
+    id: 'dayShiftFairness',
+    name: '데이공정성',
+    description: '데이(D) 근무 공정 분배',
     tier: 3,
     perspective: 'worker',
   },

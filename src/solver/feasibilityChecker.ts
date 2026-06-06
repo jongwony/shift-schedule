@@ -180,7 +180,8 @@ export function getDefaultConfig(): ConstraintConfig {
       restClustering: { enabled: true },
       postRestDayShift: { enabled: true },
       // Tier 3 - Quality of life
-      weekendFairness: { enabled: true },
+      totalWorkFairness: { enabled: true },
+      dayShiftFairness: { enabled: true },
       shiftContinuity: { enabled: true },
     },
   };

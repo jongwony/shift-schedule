@@ -15,7 +15,8 @@ import { maxSameShiftConsecutiveConstraint } from './maxSameShiftConsecutive';
 import { restClusteringConstraint } from './restClustering';
 import { postRestDayShiftConstraint } from './postRestDayShift';
 // Soft constraints - Quality of life
-import { weekendFairnessConstraint } from './weekendFairness';
+import { totalWorkFairnessConstraint } from './totalWorkFairness';
+import { dayShiftFairnessConstraint } from './dayShiftFairness';
 import { shiftContinuityConstraint } from './shiftContinuity';
 import type { Constraint } from './types';
 
@@ -38,7 +39,8 @@ export const constraintRegistry: Constraint[] = [
   restClusteringConstraint,
   postRestDayShiftConstraint,
   // Soft constraints - Quality of life (T3)
-  weekendFairnessConstraint,
+  totalWorkFairnessConstraint,
+  dayShiftFairnessConstraint,
   shiftContinuityConstraint,
 ];
 
@@ -59,7 +61,8 @@ export { maxSameShiftConsecutiveConstraint } from './maxSameShiftConsecutive';
 export { restClusteringConstraint } from './restClustering';
 export { postRestDayShiftConstraint } from './postRestDayShift';
 // Soft constraints - Quality of life
-export { weekendFairnessConstraint } from './weekendFairness';
+export { totalWorkFairnessConstraint } from './totalWorkFairness';
+export { dayShiftFairnessConstraint } from './dayShiftFairness';
 export { shiftContinuityConstraint } from './shiftContinuity';
 
 export type { Constraint, ConstraintContext, ConstraintResult, ConstraintSeverityType } from './types';
