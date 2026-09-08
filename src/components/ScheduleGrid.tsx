@@ -20,6 +20,8 @@ interface ScheduleGridProps {
   onToggleLock?: (staffId: string, date: string) => void;
   onToggleExclusion?: (staffId: string, date: string, shift: ShiftType) => void;
   onResetCell?: (staffId: string, date: string) => void;
+  /** Toggle a date as a public holiday (공휴일) — takes the weekend staffing requirement */
+  onToggleHoliday?: (date: string) => void;
   onUpdateStaff?: (staffId: string, updates: { eligibleShifts: EligibleShift[] }) => void;
   onEditingCellChange?: (cell: { staffId: string; date: string } | null) => void;
   onHoverCellChange?: (cell: { staffId: string; date: string } | null) => void;
@@ -35,6 +37,7 @@ export function ScheduleGrid({
   onToggleLock,
   onToggleExclusion,
   onResetCell,
+  onToggleHoliday,
   onUpdateStaff,
   onEditingCellChange,
   onHoverCellChange,
@@ -49,20 +52,32 @@ export function ScheduleGrid({
     [schedule.startDate]
   );
 
-  // Generate 28 dates from schedule.startDate
+  // Generate 28 dates from schedule.startDate.
+  // isOffDay = weekend or public holiday → shaded column + weekend staffing bucket
   const dates = useMemo(() => {
-    const result: { date: Date; dateString: string; isWeekStart: boolean }[] = [];
+    const holidaySet = new Set(schedule.holidays ?? []);
+    const result: {
+      date: Date;
+      dateString: string;
+      isWeekStart: boolean;
+      isHoliday: boolean;
+      isOffDay: boolean;
+    }[] = [];
     const start = parseISO(schedule.startDate);
     for (let i = 0; i < 28; i++) {
       const date = addDays(start, i);
+      const dateString = format(date, 'yyyy-MM-dd');
+      const isHoliday = holidaySet.has(dateString);
       result.push({
         date,
-        dateString: format(date, 'yyyy-MM-dd'),
+        dateString,
         isWeekStart: i > 0 && date.getDay() === 0,
+        isHoliday,
+        isOffDay: isHoliday || isWeekend(date),
       });
     }
     return result;
-  }, [schedule.startDate]);
+  }, [schedule.startDate, schedule.holidays]);
 
   // Build assignment lookup map: Map<staffId-date, ShiftAssignment>
   const assignmentMap = useMemo(() => {
@@ -144,17 +159,38 @@ export function ScheduleGrid({
             >
               직원
             </th>
-            {dates.map(({ date, dateString, isWeekStart }) => (
+            {dates.map(({ date, dateString, isWeekStart, isHoliday, isOffDay }) => (
               <th
                 key={dateString}
                 scope="col"
                 className={cn(
-                  'p-2 border-b border-gray-200 text-center text-xs font-medium whitespace-nowrap',
-                  isWeekend(date) ? 'bg-slate-200 text-slate-700' : 'bg-gray-50 text-gray-600',
+                  'p-0 border-b border-gray-200 text-center text-xs font-medium whitespace-nowrap',
+                  isHoliday
+                    ? 'bg-red-100 text-red-700'
+                    : isOffDay
+                      ? 'bg-slate-200 text-slate-700'
+                      : 'bg-gray-50 text-gray-600',
                   isWeekStart && 'border-l-2 border-l-gray-300'
                 )}
               >
-                {formatDateKorean(date)}
+                <button
+                  type="button"
+                  className={cn(
+                    'w-full h-full p-2 cursor-pointer select-none transition-colors',
+                    isHoliday ? 'hover:bg-red-200' : 'hover:bg-red-50 hover:text-red-700'
+                  )}
+                  aria-pressed={isHoliday}
+                  aria-label={`${formatDateKorean(date)} ${isHoliday ? '공휴일 해제' : '공휴일 지정'}`}
+                  title={
+                    isHoliday
+                      ? '공휴일 (주말·공휴일 인원 적용) — 클릭하여 해제'
+                      : '클릭하여 공휴일로 지정 (주말·공휴일 인원 적용)'
+                  }
+                  onClick={() => onToggleHoliday?.(dateString)}
+                >
+                  {formatDateKorean(date)}
+                  {isHoliday && <span className="ml-0.5" aria-hidden="true">🎌</span>}
+                </button>
               </th>
             ))}
             {/* Summary columns - sticky right */}
@@ -248,7 +284,7 @@ export function ScheduleGrid({
                     );
                   })()}
                 </td>
-                {dates.map(({ date, dateString, isWeekStart }) => {
+                {dates.map(({ dateString, isWeekStart, isOffDay }) => {
                   const key = getCellKey(staffMember.id, dateString);
                   const assignment = assignmentMap.get(key);
                   const cellViolations = violationMap.get(key) || [];
@@ -258,7 +294,7 @@ export function ScheduleGrid({
                       key={dateString}
                       className={cn(
                         'p-1 border-b border-gray-200',
-                        isWeekend(date) && 'bg-slate-100',
+                        isOffDay && 'bg-slate-100',
                         isLastRow && 'border-b-0',
                         isWeekStart && 'border-l-2 border-l-gray-300'
                       )}
@@ -352,14 +388,14 @@ export function ScheduleGrid({
             <td className="sticky left-0 z-10 bg-amber-50 p-2 border-t border-r border-gray-200 text-sm font-medium text-amber-600">
               D 인원
             </td>
-            {dates.map(({ date, dateString, isWeekStart }) => {
+            {dates.map(({ dateString, isWeekStart, isOffDay }) => {
               const counts = perDateCounts.get(dateString);
               return (
                 <td
                   key={dateString}
                   className={cn(
                     'p-2 border-t border-gray-200 text-center text-sm font-medium text-amber-600',
-                    isWeekend(date) && 'bg-amber-200/70',
+                    isOffDay && 'bg-amber-200/70',
                     isWeekStart && 'border-l-2 border-l-gray-300'
                   )}
                 >
@@ -377,14 +413,14 @@ export function ScheduleGrid({
             <td className="sticky left-0 z-10 bg-blue-50 p-2 border-r border-gray-200 text-sm font-medium text-blue-600">
               E 인원
             </td>
-            {dates.map(({ date, dateString, isWeekStart }) => {
+            {dates.map(({ dateString, isWeekStart, isOffDay }) => {
               const counts = perDateCounts.get(dateString);
               return (
                 <td
                   key={dateString}
                   className={cn(
                     'p-2 text-center text-sm font-medium text-blue-600',
-                    isWeekend(date) && 'bg-blue-200/70',
+                    isOffDay && 'bg-blue-200/70',
                     isWeekStart && 'border-l-2 border-l-gray-300'
                   )}
                 >
@@ -402,14 +438,14 @@ export function ScheduleGrid({
             <td className="sticky left-0 z-10 bg-purple-50 p-2 border-r border-gray-200 text-sm font-medium text-purple-600">
               N 인원
             </td>
-            {dates.map(({ date, dateString, isWeekStart }) => {
+            {dates.map(({ dateString, isWeekStart, isOffDay }) => {
               const counts = perDateCounts.get(dateString);
               return (
                 <td
                   key={dateString}
                   className={cn(
                     'p-2 text-center text-sm font-medium text-purple-600',
-                    isWeekend(date) && 'bg-purple-200/70',
+                    isOffDay && 'bg-purple-200/70',
                     isWeekStart && 'border-l-2 border-l-gray-300'
                   )}
                 >
@@ -427,6 +463,8 @@ export function ScheduleGrid({
         {!hasAssignments && (
           <div className="p-4 text-center text-sm text-gray-500 bg-gray-50 border-t border-gray-200">
             각 셀을 클릭하여 근무를 배정하세요 (D: 데이, E: 이브닝, N: 나이트, OFF: 휴무)
+            <br />
+            날짜 헤더를 클릭하면 공휴일로 지정됩니다 (주말·공휴일 인원 적용)
           </div>
         )}
       </div>

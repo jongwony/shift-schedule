@@ -17,6 +17,12 @@ export interface Schedule {
   staffJuhuDays?: Array<{ staffId: string; juhuDay: DayOfWeek }>;
   /** Cell-level shift exclusions. Key: getCellKey(staffId, date), Value: excluded ShiftTypes */
   cellExclusions?: Record<string, ShiftType[]>;
+  /**
+   * Public holidays (공휴일) inside the 28-day window, as ISO dates (yyyy-MM-dd).
+   * A holiday takes the weekend staffing requirement (same rule as the backend
+   * solver's `holidays` request field), regardless of its weekday.
+   */
+  holidays?: string[];
 }
 
 export interface PreviousPeriodData {

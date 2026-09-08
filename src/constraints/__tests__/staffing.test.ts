@@ -5,13 +5,15 @@ import type { Schedule, Staff, ConstraintConfig, ShiftAssignment } from '@/types
 
 function createTestContext(
   assignments: ShiftAssignment[],
-  staffList: Staff[] = []
+  staffList: Staff[] = [],
+  holidays?: string[]
 ): ConstraintContext {
   const schedule: Schedule = {
     id: 'test-schedule',
     name: 'Test Schedule',
     startDate: '2025-01-06', // Monday
     assignments,
+    holidays,
   };
 
   const staff: Staff[] = staffList.length
@@ -166,6 +168,51 @@ describe('staffingConstraint', () => {
     );
     expect(weekendDayViolation).toBeDefined();
     expect(weekendDayViolation?.message).toContain('최소 2명');
+  });
+
+  it('should apply weekend staffing requirements on a weekday public holiday', () => {
+    // Wednesday 2025-01-08 marked as holiday → weekend D=2 applies (weekday would be D=1)
+    const assignments: ShiftAssignment[] = [
+      { staffId: 'staff-1', date: '2025-01-08', shift: 'D' }, // Only 1 D
+      { staffId: 'staff-2', date: '2025-01-08', shift: 'E' },
+      { staffId: 'staff-3', date: '2025-01-08', shift: 'E' },
+      { staffId: 'staff-4', date: '2025-01-08', shift: 'N' },
+      { staffId: 'staff-5', date: '2025-01-08', shift: 'N' },
+    ];
+
+    // Without the holiday the same day satisfies the weekday requirement
+    const plain = staffingConstraint.check(createTestContext(assignments));
+    expect(plain.violations.filter((v) => v.context.date === '2025-01-08')).toHaveLength(0);
+
+    const holiday = staffingConstraint.check(
+      createTestContext(assignments, [], ['2025-01-08'])
+    );
+    const holidayDayViolation = holiday.violations.find(
+      (v) => v.context.date === '2025-01-08' && v.message.includes('데이')
+    );
+    expect(holidayDayViolation).toBeDefined();
+    expect(holidayDayViolation?.message).toContain('데이 근무 1명');
+    expect(holidayDayViolation?.message).toContain('최소 2명');
+  });
+
+  it('should apply weekend (not friday) staffing on a friday public holiday', () => {
+    // Friday 2025-01-10 as holiday → weekend D=2 (friday bucket would demand D=3)
+    const context = createTestContext(
+      [
+        { staffId: 'staff-1', date: '2025-01-10', shift: 'D' },
+        { staffId: 'staff-2', date: '2025-01-10', shift: 'D' },
+        { staffId: 'staff-3', date: '2025-01-10', shift: 'E' },
+        { staffId: 'staff-4', date: '2025-01-10', shift: 'E' },
+        { staffId: 'staff-5', date: '2025-01-10', shift: 'N' },
+        { staffId: 'staff-6', date: '2025-01-10', shift: 'N' },
+      ],
+      [],
+      ['2025-01-10']
+    );
+
+    const result = staffingConstraint.check(context);
+
+    expect(result.violations.filter((v) => v.context.date === '2025-01-10')).toHaveLength(0);
   });
 
   it('should have error severity', () => {

@@ -51,6 +51,8 @@ export interface GenerateRequest {
   previousPeriodEnd?: ShiftAssignment[];
   lockedAssignments?: ShiftAssignment[];
   cellExclusions?: Array<{ staffId: string; date: string; excludedShifts: string[] }>;
+  /** Public holiday dates (yyyy-MM-dd). Solver applies the weekend staffing bucket to these. */
+  holidays?: string[];
 }
 
 export interface GenerateResponse {
@@ -71,6 +73,8 @@ export interface FeasibilityCheckRequest {
     /** Global toggle for solver-determined weekly holiday (주휴). Default true. */
     enableJuhu?: boolean;
   };
+  /** Public holiday dates (yyyy-MM-dd). Counted as weekend days in the capacity estimate. */
+  holidays?: string[];
 }
 
 export interface FeasibilityCheckResponse {

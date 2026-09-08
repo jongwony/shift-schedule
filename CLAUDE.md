@@ -100,18 +100,18 @@ App.tsx
 - Auto-generation: Backend API integration (`VITE_SOLVER_API_URL`)
 - Cell Lock (고정): Right-click (desktop) or long-press 500ms (mobile) to lock cells; locked cells preserved during auto-generation
 - Previous Period Input: 7-day input window for boundary constraint checking
-- Staffing Override: Click D/E/N count row in grid footer to set date-specific staffing requirements (min=max=input)
+- Public Holiday (공휴일): Click a date header in the grid to toggle it as a holiday. Holidays take the **weekend** staffing bucket (same rule as the backend `_get_staffing_bucket`: holiday > weekend > friday > weekday), are stored in `schedule.holidays`, shaded in the grid, and sent as `holidays` in both API requests. Cleared when the start date changes.
 - Export: TSV to clipboard (Ctrl+V into spreadsheet); Import: JSON file for full state restore
 
 **Core Types** (`src/types/`):
 - `Staff`: {id, name}
 - `ShiftAssignment`: {staffId, date, shift, isLocked?}
-- `Schedule`: {id, name, startDate, assignments[], staffJuhuDays?}
+- `Schedule`: {id, name, startDate, assignments[], staffJuhuDays?, cellExclusions?, holidays?}
 - `SoftConstraintConfig`: Per-constraint `{enabled, maxDays?, minBlockSize?, maxOff?}`
-- `StaffingOverrides`: `Record<string, {D?: number, E?: number, N?: number}>` - date-specific staffing counts
+- `WeeklyStaffing`: `{weekday, friday, weekend}` per week; `weekend` also covers public holidays
 
 **API Types** (`src/types/api.ts`):
-- `GenerateRequest`: {staff, startDate, constraints, previousPeriodEnd?, lockedAssignments?}
+- `GenerateRequest`: {staff, startDate, constraints, previousPeriodEnd?, lockedAssignments?, cellExclusions?, holidays?}
 - `GenerateResponse`: {success, schedule?, error?, staffJuhuDays?}
 - `FeasibilityCheckRequest/Response`: Pre-generation feasibility check
 - `ApiError`: {code: `INFEASIBLE` | `TIMEOUT` | `INVALID_INPUT`, message}
@@ -129,7 +129,7 @@ Frontend uses JavaScript `getDay()` (0=Sunday), Backend uses Python `weekday()` 
 
 ## Utilities
 
-**Date** (`src/utils/dateUtils.ts`): `formatDateKorean()`, `getWeekBoundaries()`, `forEachDateInRange()`, `isWeekend()`
+**Date** (`src/utils/dateUtils.ts`): `formatDateKorean()`, `getWeekBoundaries()`, `forEachDateInRange()`, `isWeekend()`, `getStaffingBucket(date, isHoliday)` (weekday/friday/weekend, mirrors backend)
 
 **Day** (`src/utils/dayUtils.ts`): `DAY_NAMES` - Korean day-of-week names (일/월/화/수/목/금/토) keyed by DayOfWeek (0=Sunday)
 

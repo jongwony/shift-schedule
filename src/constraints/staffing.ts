@@ -1,5 +1,6 @@
-import { parseISO, addDays, format, isFriday, isWeekend } from 'date-fns';
+import { parseISO, addDays, format } from 'date-fns';
 import type { Violation } from '@/types';
+import { getStaffingBucket } from '@/utils/dateUtils';
 import type { Constraint, ConstraintContext } from './types';
 import { getSeverityFromConfig } from './types';
 
@@ -31,6 +32,8 @@ export const staffingConstraint: Constraint = {
 
     const startDate = parseISO(schedule.startDate);
     const periodDays = 28;
+    // Public holidays take the weekend requirement (same rule as the backend solver)
+    const holidays = new Set(schedule.holidays ?? []);
 
     for (let i = 0; i < periodDays; i++) {
       const currentDateObj = addDays(startDate, i);
@@ -38,11 +41,9 @@ export const staffingConstraint: Constraint = {
       const weekIndex = Math.min(Math.floor(i / 7), config.weeklyStaffing.length - 1);
       const weekStaffing = config.weeklyStaffing[weekIndex];
 
-      const staffingReq = isWeekend(currentDateObj)
-        ? weekStaffing.weekend
-        : isFriday(currentDateObj)
-          ? weekStaffing.friday
-          : weekStaffing.weekday;
+      const bucket = getStaffingBucket(currentDateObj, holidays.has(currentDate));
+      // Fall back to weekday when the friday bucket is missing (pre-migration configs)
+      const staffingReq = weekStaffing[bucket] ?? weekStaffing.weekday;
 
       // Count staff per shift type for this date
       const shiftCounts: Record<'D' | 'E' | 'N', number> = { D: 0, E: 0, N: 0 };

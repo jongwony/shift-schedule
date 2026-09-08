@@ -51,6 +51,31 @@ export function isWeekend(date: Date): boolean {
   return dateFnsIsWeekend(date);
 }
 
+/** Staffing requirement bucket a date falls into (keys of `WeeklyStaffing`). */
+export type StaffingBucket = 'weekday' | 'friday' | 'weekend';
+
+/**
+ * Classify a date into its staffing bucket.
+ *
+ * Mirrors the backend solver's `_get_staffing_bucket`:
+ * - Saturday, Sunday, or a public holiday → 'weekend' (a holiday on a Friday
+ *   is also 'weekend', so holidays never get the lighter Friday requirement)
+ * - Friday → 'friday'
+ * - otherwise → 'weekday'
+ */
+export function getStaffingBucket(date: Date, isHoliday = false): StaffingBucket {
+  if (isHoliday || dateFnsIsWeekend(date)) return 'weekend';
+  if (date.getDay() === 5) return 'friday';
+  return 'weekday';
+}
+
+/** Korean label for a staffing bucket. */
+export const STAFFING_BUCKET_LABELS: Record<StaffingBucket, string> = {
+  weekday: '평일',
+  friday: '금요일',
+  weekend: '주말·공휴일',
+};
+
 export interface WindowSplit {
   /** Days in the start month (window front = closing month's tail). 0 if startDate is the 1st. */
   frontDays: number;

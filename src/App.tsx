@@ -76,6 +76,7 @@ function ScheduleApp() {
     toggleLock,
     toggleExclusion,
     resetCell,
+    toggleHoliday,
     setStartDate,
     setPreviousPeriodEnd,
     setRequiredNights,
@@ -316,6 +317,7 @@ function ScheduleApp() {
                     onToggleLock={toggleLock}
                     onToggleExclusion={toggleExclusion}
                     onResetCell={resetCell}
+                    onToggleHoliday={toggleHoliday}
                     onUpdateStaff={updateStaff}
                     onEditingCellChange={setEditingCell}
                     onHoverCellChange={setHoveredCell}

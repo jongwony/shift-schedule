@@ -1,5 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { splitWindowByMonth } from '../dateUtils';
+import { parseISO } from 'date-fns';
+import { splitWindowByMonth, getStaffingBucket } from '../dateUtils';
+
+describe('getStaffingBucket', () => {
+  it('classifies plain weekdays, fridays and weekends', () => {
+    expect(getStaffingBucket(parseISO('2025-01-06'))).toBe('weekday'); // Mon
+    expect(getStaffingBucket(parseISO('2025-01-10'))).toBe('friday'); // Fri
+    expect(getStaffingBucket(parseISO('2025-01-11'))).toBe('weekend'); // Sat
+    expect(getStaffingBucket(parseISO('2025-01-12'))).toBe('weekend'); // Sun
+  });
+
+  it('puts a public holiday into the weekend bucket regardless of weekday', () => {
+    expect(getStaffingBucket(parseISO('2025-01-06'), true)).toBe('weekend'); // Mon holiday
+    expect(getStaffingBucket(parseISO('2025-01-10'), true)).toBe('weekend'); // Fri holiday
+    expect(getStaffingBucket(parseISO('2025-01-11'), true)).toBe('weekend'); // Sat holiday
+  });
+});
 
 describe('splitWindowByMonth', () => {
   it('splits a mid-month start across a month boundary', () => {

@@ -3,6 +3,9 @@ export {
   getWeekBoundaries,
   forEachDateInRange,
   isWeekend,
+  getStaffingBucket,
+  STAFFING_BUCKET_LABELS,
+  type StaffingBucket,
 } from './dateUtils';
 export { getShiftSequence, countShiftsByType } from './shiftUtils';
 export {

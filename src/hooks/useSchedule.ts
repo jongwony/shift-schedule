@@ -473,13 +473,31 @@ export function useSchedule() {
     [setSchedule]
   );
 
+  /**
+   * Toggle a date as a public holiday (공휴일). Holidays take the weekend
+   * staffing requirement in both the local check and the backend solver.
+   */
+  const toggleHoliday = useCallback(
+    (date: string) => {
+      setSchedule((prev) => {
+        const current = prev.holidays ?? [];
+        const holidays = current.includes(date)
+          ? current.filter((d) => d !== date)
+          : [...current, date].sort();
+        return { ...prev, holidays };
+      });
+    },
+    [setSchedule]
+  );
+
   const setStartDate = useCallback((date: string) => {
     setSchedule((prev) => ({
       ...prev,
       startDate: date,
-      // Clear assignments and exclusions when period changes
+      // Clear assignments, exclusions and holidays when period changes
       assignments: [],
       cellExclusions: {},
+      holidays: [],
     }));
     setPreviousPeriodEnd([]);
   }, [setSchedule, setPreviousPeriodEnd]);
@@ -510,6 +528,7 @@ export function useSchedule() {
 
     // Extract locked assignments
     const lockedAssignments = schedule.assignments.filter((a) => a.isLocked);
+    const holidays = schedule.holidays ?? [];
 
     const requestPayload = {
       staff: staff.map((s) => ({ id: s.id, name: s.name, eligibleShifts: getEligibleShifts(s) })),
@@ -523,6 +542,8 @@ export function useSchedule() {
         enableJuhu: config.enabledConstraints.juhu,
         requiredNights,
       },
+      // Public holidays → weekend staffing bucket (solver + capacity pre-check)
+      holidays: holidays.length > 0 ? holidays : undefined,
     };
 
     try {
@@ -601,7 +622,7 @@ export function useSchedule() {
       const message = error instanceof Error ? error.message : '알 수 없는 오류';
       toast.error(`API 오류: ${message}`);
     }
-  }, [staff, schedule.startDate, schedule.assignments, schedule.cellExclusions, config, previousPeriodEnd, requiredNights, setSchedule]);
+  }, [staff, schedule.startDate, schedule.assignments, schedule.cellExclusions, schedule.holidays, config, previousPeriodEnd, requiredNights, setSchedule]);
 
   // ==================== Export/Import Actions ====================
 
@@ -678,6 +699,7 @@ export function useSchedule() {
     toggleLock,
     toggleExclusion,
     resetCell,
+    toggleHoliday,
     setStartDate,
     clearSchedule,
     setPreviousPeriodEnd,

@@ -144,7 +144,7 @@ export function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
                 {(['weekday', 'friday', 'weekend'] as const).map((dayType) => (
                   <tr key={dayType} className="border-t border-gray-100">
                     <td className="py-2 pr-2 font-medium text-sm whitespace-nowrap">
-                      {dayType === 'weekday' ? '평일' : dayType === 'friday' ? '금요일' : '주말'}
+                      {dayType === 'weekday' ? '평일' : dayType === 'friday' ? '금요일' : '주말·공휴일'}
                     </td>
                     {config.weeklyStaffing.flatMap((weekConfig, weekIndex) =>
                       (['day', 'evening', 'night'] as const).map((shiftKey) => (
@@ -181,6 +181,9 @@ export function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
               </tbody>
             </table>
           </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            공휴일(명절 등)은 근무표 탭에서 날짜 헤더를 클릭해 지정하며, 주말·공휴일 인원이 적용됩니다.
+          </p>
         </CardContent>
       </Card>
 
