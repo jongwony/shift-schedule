@@ -16,6 +16,9 @@ export function TermsView() {
       <article className="mx-auto max-w-3xl px-4 py-10 text-sm leading-relaxed text-gray-800">
         <h1 className="mb-2 text-2xl font-semibold text-gray-900">이용약관</h1>
         <p className="mb-8 text-xs text-gray-500">시행일: {SERVICE_INFO.effectiveDate}</p>
+        <aside aria-label="유료 상품 안내" className="mb-8 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          현재 유료 상품은 준비 중이며 결제를 받지 않습니다. 아래 유료 상품 관련 안내는 출시 시 적용 여부와 조건을 다시 안내합니다.
+        </aside>
 
         <Section title="제1조 (목적)">
           이 약관은 {BUSINESS_INFO.companyName}(이하 "회사")가 제공하는 {SERVICE_INFO.serviceName}(이하 "서비스")의
@@ -27,8 +30,8 @@ export function TermsView() {
             <li>"서비스"란 회사가 제공하는 자동 근무표 생성 및 검증 도구를 의미합니다.</li>
             <li>"이용자"란 본 약관에 동의하고 서비스를 이용하는 회원 및 비회원을 말합니다.</li>
             <li>"회원"이란 Google 계정을 통해 가입한 이용자를 말합니다.</li>
-            <li>"유료 상품"이란 데이 패스(Day Pass)를 말합니다.</li>
-            <li>"활성화"란 데이 패스 결제 후 회원이 자동 생성을 처음 호출한 시점을 말하며, 이 시점부터 24시간이 카운트됩니다.</li>
+            <li>"유료 상품"이란 출시 예정인 데이 패스(Day Pass)를 말합니다.</li>
+            <li>"활성화"란 출시 예정인 데이 패스 결제 후 회원이 자동 생성을 처음 호출한 시점을 말하며, 이 시점부터 24시간이 카운트됩니다.</li>
           </ol>
         </Section>
 
@@ -46,7 +49,7 @@ export function TermsView() {
             <li>회사는 회원에게 다음 각 호의 서비스를 제공합니다.
               <ul className="mt-1 list-disc space-y-0.5 pl-5">
                 <li>무료 회원: 매월 자동 스케줄 생성 3회</li>
-                <li>데이 패스: 결제 후 첫 자동 생성 시점부터 24시간 동안 자동 스케줄 무제한 생성</li>
+                <li>데이 패스(출시 예정): 결제 후 첫 자동 생성 시점부터 24시간 동안 자동 스케줄 무제한 생성</li>
               </ul>
             </li>
             <li>서비스 이용은 회사의 업무상 또는 기술상 특별한 지장이 없는 한 연중무휴, 1일 24시간을 원칙으로 합니다.</li>
@@ -56,9 +59,9 @@ export function TermsView() {
 
         <Section title="제5조 (요금 및 결제)">
           <ol className="list-decimal space-y-1 pl-5">
-            <li>유료 상품의 요금은 다음과 같습니다.
+            <li>출시 예정 유료 상품의 가격안은 다음과 같습니다.
               <ul className="mt-1 list-disc space-y-0.5 pl-5">
-                <li>데이 패스: 3,000원 (1회 결제, 첫 사용 시점부터 24시간)</li>
+                <li>데이 패스: 3,000원 (1회 결제, 첫 사용 시점부터 24시간, 출시 전 변경 가능)</li>
               </ul>
             </li>
             <li>결제수단은 신용카드, 계좌이체, 간편결제로 한정합니다. 가상계좌는 지원하지 않습니다.</li>

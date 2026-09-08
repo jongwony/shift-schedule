@@ -6,15 +6,14 @@
  */
 
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react';
 
+import { AuthContext, type AuthContextValue } from './authContext';
 import type { AuthUser } from '@/types/auth';
 import {
   clearTokens,
@@ -25,25 +24,6 @@ import {
   loginWithGoogle,
   storeTokens,
 } from '@/services/authApi';
-
-interface AuthContextValue {
-  /** Current authenticated user, or null if not logged in. */
-  user: AuthUser | null;
-  /** Whether initial auth check is in progress. */
-  isLoading: boolean;
-  /** Whether user is authenticated. */
-  isAuthenticated: boolean;
-  /** Sign in with Google ID token. */
-  signIn: (idToken: string) => Promise<void>;
-  /** Sign out and clear tokens. */
-  signOut: () => void;
-  /** Refresh user data from server (e.g., after plan upgrade). */
-  refreshUser: () => Promise<void>;
-  /** Get a valid access token for API calls. Returns null if not authenticated. */
-  getAccessToken: () => Promise<string | null>;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -116,12 +96,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 }

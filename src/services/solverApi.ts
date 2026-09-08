@@ -27,7 +27,7 @@ async function authenticatedFetch(url: string, options: RequestInit): Promise<Re
   headers.set('Authorization', `Bearer ${token}`);
   headers.set('Content-Type', 'application/json');
 
-  let response = await fetch(url, { ...options, headers });
+  const response = await fetch(url, { ...options, headers });
 
   // Handle 401: try refresh once, then retry
   if (response.status === 401) {

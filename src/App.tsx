@@ -17,14 +17,19 @@ import { GenerationCounter } from '@/components/GenerationCounter';
 import { Footer } from '@/components/Footer';
 import { PricingView } from '@/components/PricingView';
 import { TermsView } from '@/components/TermsView';
+import { ProductView } from '@/components/ProductView';
+import { DemoView } from '@/components/DemoView';
 import { PrivacyView } from '@/components/PrivacyView';
 import { useSchedule } from '@/hooks/useSchedule';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 import { isApiConfigured, getLastRemainingCount } from '@/services/solverApi';
 import { GenerationLimitError } from '@/types/auth';
+import { normalizeRoute } from '@/utils/routes';
 
 function App() {
-  const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const path = typeof window !== 'undefined' ? normalizeRoute(window.location.pathname) : '/';
+  if (path === '/about') return <ProductView />;
+  if (path === '/demo') return <DemoView />;
   if (path === '/pricing') return <PricingView />;
   if (path === '/terms') return <TermsView />;
   if (path === '/privacy') return <PrivacyView />;
@@ -101,12 +106,6 @@ function ScheduleApp() {
       }
       // Other errors are already handled by useSchedule via toast
     }
-  };
-
-  const handleUpgrade = (type: 'daypass') => {
-    setUpgradePromptOpen(false);
-    // TODO: integrate TossPayments checkout flow
-    toast.info(`${type === 'daypass' ? '데이 패스' : ''} 결제 준비 중`);
   };
 
   // Export handler - TSV to clipboard for spreadsheet paste
@@ -193,7 +192,8 @@ function ScheduleApp() {
               Shift Schedule - 교대 근무 검증하기
             </h1>
             <nav aria-label="주요 기능">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <a href="/about" className="px-3 py-1.5 text-sm text-gray-700 hover:underline">서비스 소개</a>
                 <a
                   href="/pricing"
                   className="px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 hover:underline transition-colors"
@@ -351,7 +351,6 @@ function ScheduleApp() {
         <UpgradePrompt
           open={upgradePromptOpen}
           onOpenChange={setUpgradePromptOpen}
-          onUpgrade={handleUpgrade}
         />
         <Footer />
       </div>
