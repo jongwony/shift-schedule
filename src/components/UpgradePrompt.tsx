@@ -14,13 +14,11 @@ import {
 interface UpgradePromptProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpgrade: (type: 'daypass') => void;
 }
 
 export function UpgradePrompt({
   open,
   onOpenChange,
-  onUpgrade,
 }: UpgradePromptProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -59,7 +57,7 @@ export function UpgradePrompt({
               </tr>
               <tr>
                 <td className="py-2.5 text-left text-muted-foreground">상태</td>
-                <td className="py-2.5 text-xs text-blue-600">바로 구매</td>
+                <td className="py-2.5 text-xs text-blue-600">준비 중</td>
                 <td className="py-2.5 text-xs text-gray-400">준비 중</td>
               </tr>
             </tbody>
@@ -69,13 +67,13 @@ export function UpgradePrompt({
         <div className="pt-2">
           <button
             type="button"
-            onClick={() => onUpgrade('daypass')}
-            className="w-full px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+            disabled
+            className="w-full px-4 py-2.5 text-sm font-medium text-white bg-gray-400 rounded-md cursor-not-allowed"
           >
-            데이 패스 구매
+            유료 결제 준비 중
           </button>
           <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground text-center">
-            결제 후 첫 생성 시점부터 24시간 카운트가 시작됩니다. 사용 시작 후에는 환불이 불가능합니다.
+            현재 결제를 받지 않습니다. 다음 달 무료 생성 횟수가 갱신되며, 수동 편집과 검증은 계속 이용할 수 있습니다.
           </p>
         </div>
       </DialogContent>

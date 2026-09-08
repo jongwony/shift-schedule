@@ -117,8 +117,7 @@ function migrateStorageIfNeeded(): boolean {
   return false;
 }
 
-// Run migration immediately on module load (before useLocalStorage hooks)
-migrateStorageIfNeeded();
+// Migration runs only when the editor mounts, never while browsing the demo.
 
 /**
  * Generate a unique ID for entities.
@@ -166,6 +165,8 @@ interface ExportData {
  * - Session recovery notification
  */
 export function useSchedule() {
+  // Initialize before storage hooks read persisted values; migration is idempotent.
+  useState(migrateStorageIfNeeded);
   // Persisted state
   const [staff, setStaff] = useLocalStorage<Staff[]>(STORAGE_KEYS.staff, []);
   const [schedule, setSchedule] = useLocalStorage<Schedule>(

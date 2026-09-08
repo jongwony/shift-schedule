@@ -1,4 +1,4 @@
-import { SERVICE_INFO } from '@/config/business';
+import { BUSINESS_INFO, SERVICE_INFO } from '@/config/business';
 import { Footer } from '@/components/Footer';
 
 export function PricingView() {
@@ -9,7 +9,7 @@ export function PricingView() {
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-semibold text-gray-900">요금제</h1>
           <p className="mt-2 text-sm text-gray-600">
-            매월 3회 무료로 시험 사용해보고, 필요할 때 부담 없이 결제하세요.
+            수동 편집과 검증은 무료, 로그인 후 자동 생성은 월 3회입니다. 유료 결제는 준비 중입니다.
           </p>
         </div>
 
@@ -31,15 +31,15 @@ export function PricingView() {
           <PlanCard
             name="데이 패스"
             price="3,000원"
-            period="1회 결제 / 첫 사용 시점부터 24시간"
+            period="예정 요금 / 출시 후 첫 사용부터 24시간"
             features={[
               '결제 후 첫 자동 생성 시점부터 24시간 무제한',
               '활성화 전까지는 환불 가능',
               '자동결제 없음',
               '단발성 사용에 적합',
             ]}
-            cta="데이 패스 구매"
-            ctaHref="/?upgrade=daypass"
+            cta="결제 준비 중"
+            disabled
             highlight
           />
           <PlanCard
@@ -58,30 +58,13 @@ export function PricingView() {
         </div>
 
         <section className="mt-12 rounded-md border border-gray-200 bg-gray-50 p-6">
-          <h2 className="mb-3 text-base font-semibold text-gray-900">결제 안내</h2>
-          <dl className="space-y-2 text-sm text-gray-700">
-            <Row label="결제수단" value="신용카드, 계좌이체, 간편결제 (가상계좌 미지원)" />
-            <Row label="결제대행" value="(주)토스페이먼츠" />
-            <Row label="서비스 제공 기간" value="데이 패스: 첫 자동 생성 시점부터 24시간" />
-            <Row label="환불 정책" value="첫 사용 시점 이전까지 환불 가능, 사용 시작 후 환불 불가" />
-          </dl>
-        </section>
-
-        <section className="mt-6 rounded-md border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-          <h2 className="mb-2 text-base font-semibold">청약철회 안내 (디지털 콘텐츠 특례)</h2>
-          <p>
-            본 서비스는 「전자상거래 등에서의 소비자보호에 관한 법률」 제17조 제2항 제5호에 따른
-            디지털 콘텐츠로, 이용 시작 시점부터 청약철회가 제한됩니다. 결제 전 무료 3회 생성을 통해
-            서비스를 충분히 시험 사용해보시기 바랍니다. 자세한 환불 정책은{' '}
-            <a href="/terms#refund" className="underline hover:text-amber-700">
-              이용약관 제6조
-            </a>
-            를 참고하세요.
-          </p>
+          <h2 className="text-lg font-semibold">유료 기능 출시 준비 중</h2>
+          <p className="mt-3 leading-relaxed text-gray-600">현재 결제를 받지 않습니다. 데이 패스의 가격과 제공 범위는 출시 전 변경될 수 있으며, 결제·환불 조건은 출시 시 안내합니다.</p>
+          <a className="mt-3 inline-block text-blue-700 underline" href={`mailto:${BUSINESS_INFO.email}`}>도입 및 요금 문의</a>
         </section>
 
         <p className="mt-10 text-center text-xs text-gray-500">
-          모든 가격은 부가세(VAT) 포함입니다. 결제 통화: KRW
+          예정 가격은 부가세(VAT) 포함, 원화(KRW) 기준입니다.
         </p>
       </main>
       <Footer />
@@ -166,20 +149,6 @@ function PlanCard({ name, price, period, features, cta, ctaHref, disabled = fals
           {cta}
         </a>
       )}
-    </div>
-  );
-}
-
-interface RowProps {
-  label: string;
-  value: string;
-}
-
-function Row({ label, value }: RowProps) {
-  return (
-    <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-      <dt className="w-32 shrink-0 font-medium text-gray-600">{label}</dt>
-      <dd className="text-gray-800">{value}</dd>
     </div>
   );
 }
