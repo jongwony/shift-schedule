@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Toaster, toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StaffList } from '@/components/StaffList';
@@ -20,6 +20,13 @@ import { TermsView } from '@/components/TermsView';
 import { ProductView } from '@/components/ProductView';
 import { DemoView } from '@/components/DemoView';
 import { PrivacyView } from '@/components/PrivacyView';
+import {
+  FirstVisitGuide,
+} from '@/components/FirstVisitGuide';
+import {
+  dismissFirstVisitGuide,
+  hasDismissedFirstVisitGuide,
+} from '@/components/firstVisitGuideStorage';
 import { useSchedule } from '@/hooks/useSchedule';
 import { useAuth } from '@/contexts/useAuth';
 import { isApiConfigured, getLastRemainingCount } from '@/services/solverApi';
@@ -38,16 +45,39 @@ function App() {
 }
 
 function ScheduleApp() {
-  const { user, isAuthenticated } = useAuth();
-  const [loginPromptOpen, setLoginPromptOpen] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).get('signup') === '1';
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  // Capture query intent before the URL-cleanup effect below runs. This also
+  // suppresses onboarding for the rest of this mount after auth/upgrade closes.
+  const [entryPromptIntent] = useState(() => {
+    if (typeof window === 'undefined') {
+      return {
+        hasSignup: false,
+        hasUpgrade: false,
+        shouldOpenLogin: false,
+        shouldOpenUpgrade: false,
+      };
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    return {
+      hasSignup: params.has('signup'),
+      hasUpgrade: params.has('upgrade'),
+      shouldOpenLogin: params.get('signup') === '1',
+      shouldOpenUpgrade: params.get('upgrade') === 'daypass',
+    };
   });
-  const [upgradePromptOpen, setUpgradePromptOpen] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    const upgrade = new URLSearchParams(window.location.search).get('upgrade');
-    return upgrade === 'daypass';
-  });
+  const [loginPromptOpen, setLoginPromptOpen] = useState(
+    entryPromptIntent.shouldOpenLogin,
+  );
+  const [upgradePromptOpen, setUpgradePromptOpen] = useState(
+    entryPromptIntent.shouldOpenUpgrade,
+  );
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [guideDismissed, setGuideDismissed] = useState(
+    hasDismissedFirstVisitGuide,
+  );
+  const guideAutoShownRef = useRef(false);
+  const guideButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -91,6 +121,56 @@ function ScheduleApp() {
     setConfig,
     importFromJSON,
   } = useSchedule();
+
+  const hasExistingRoster = staff.length > 0 || schedule.assignments.length > 0;
+  const hadExistingRosterOnMountRef = useRef(hasExistingRoster);
+
+  // Wait for auth session recovery before opening the guide. Existing roster
+  // data identifies returning editors and keeps their work uninterrupted.
+  useEffect(() => {
+    if (
+      authLoading ||
+      guideDismissed ||
+      guideAutoShownRef.current ||
+      hadExistingRosterOnMountRef.current ||
+      hasExistingRoster ||
+      entryPromptIntent.hasSignup ||
+      entryPromptIntent.hasUpgrade ||
+      loginPromptOpen ||
+      upgradePromptOpen
+    ) {
+      // If another modal is opened before the deferred auto-open runs, consume
+      // this mount's automatic attempt so it cannot appear after that modal.
+      if (loginPromptOpen || upgradePromptOpen) {
+        guideAutoShownRef.current = true;
+      }
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      guideAutoShownRef.current = true;
+      setGuideOpen(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [
+    authLoading,
+    entryPromptIntent.hasSignup,
+    entryPromptIntent.hasUpgrade,
+    guideDismissed,
+    hasExistingRoster,
+    loginPromptOpen,
+    upgradePromptOpen,
+  ]);
+
+  const handleGuideOpenChange = useCallback((open: boolean) => {
+    setGuideOpen(open);
+    if (!open) {
+      // All Radix close paths (X, Escape, outside click) arrive here. Keep the
+      // in-memory marker even when this browser cannot persist localStorage.
+      setGuideDismissed(true);
+      dismissFirstVisitGuide();
+    }
+  }, []);
 
   // Auth-gated auto-generation handler
   const handleGenerate = async () => {
@@ -200,6 +280,14 @@ function ScheduleApp() {
                 >
                   요금제
                 </a>
+                <button
+                  ref={guideButtonRef}
+                  type="button"
+                  onClick={() => setGuideOpen(true)}
+                  className="px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 hover:underline transition-colors"
+                >
+                  사용 안내
+                </button>
                 {isAuthenticated && user && (
                   <>
                     <GenerationCounter
@@ -351,6 +439,11 @@ function ScheduleApp() {
         <UpgradePrompt
           open={upgradePromptOpen}
           onOpenChange={setUpgradePromptOpen}
+        />
+        <FirstVisitGuide
+          open={guideOpen}
+          onOpenChange={handleGuideOpenChange}
+          restoreFocusRef={guideButtonRef}
         />
         <Footer />
       </div>
