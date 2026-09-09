@@ -39,6 +39,9 @@ describe('FirstVisitGuide', () => {
 
     expect(screen.getByRole('dialog', { name: '근무표 편집기 사용 안내' })).toBeInTheDocument();
     expect(screen.getByText('직원관리 탭에서 직원 이름을 추가하세요.')).toBeInTheDocument();
+    expect(screen.getByText('근무표에서 셀을 탭/클릭하면 가능한 D·E·N·OFF가 차례로 바뀝니다.')).toBeInTheDocument();
+    expect(screen.getByText(/0\.5초 길게 누르거나 우클릭하면 고정·배제·초기화/)).toBeInTheDocument();
+    expect(screen.getByText(/고정한 근무는 자동 생성에서도 유지됩니다/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '샘플로 둘러보기' })).toHaveAttribute('href', '/demo');
     expect(screen.getByRole('button', { name: '내 근무표 만들기' })).toBeInTheDocument();
   });

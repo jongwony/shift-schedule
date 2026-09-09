@@ -1,42 +1,64 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { addDays, format, parseISO } from 'date-fns';
+import { Toaster } from 'sonner';
 import type { Schedule, ShiftType } from '@/types';
-import { checkFeasibility, getDefaultConfig } from '@/solver/feasibilityChecker';
+import { useSchedule } from '@/hooks/useSchedule';
 import { ProductHeader } from '@/components/ProductView';
 import { Footer } from '@/components/Footer';
-import { ViolationList } from '@/components/ViolationList';
 import { Button } from '@/components/ui/button';
+import { ScheduleWorkspace } from '@/components/ScheduleWorkspace';
 
-const staff = Array.from({ length: 8 }, (_, i) => ({ id: `demo-${i + 1}`, name: `샘플 직원 ${i + 1}` }));
-const dates = Array.from({ length: 28 }, (_, i) => format(addDays(parseISO('2026-09-07'), i), 'yyyy-MM-dd'));
-const shifts: ShiftType[] = ['D', 'E', 'N', 'OFF'];
-const colors: Record<ShiftType, string> = { D: 'bg-blue-50 text-blue-900', E: 'bg-orange-50 text-orange-900', N: 'bg-indigo-50 text-indigo-900', OFF: 'bg-gray-100 text-gray-700' };
-
-function createSample(): Schedule {
+function createSample() {
+  const staff = Array.from({ length: 8 }, (_, i) => ({ id: `demo-${i + 1}`, name: `샘플 직원 ${i + 1}` }));
+  const dates = Array.from({ length: 28 }, (_, i) => format(addDays(parseISO('2026-09-07'), i), 'yyyy-MM-dd'));
   const cycle: ShiftType[] = ['D', 'D', 'E', 'E', 'N', 'N', 'OFF', 'OFF'];
-  return { id: 'demo', name: '가상 팀 샘플', startDate: dates[0], assignments: staff.flatMap((person, index) => dates.map((date, day) => ({ staffId: person.id, date, shift: cycle[(day + index) % cycle.length] }))) };
+  const schedule: Schedule = { id: 'demo', name: '가상 팀 샘플', startDate: dates[0], assignments: staff.flatMap((person, index) => dates.map((date, day) => ({ staffId: person.id, date, shift: cycle[(day + index) % cycle.length] }))) };
+  return { staff, schedule };
 }
 
 export function DemoView() {
-  const [schedule, setSchedule] = useState(createSample);
-  const config = useMemo(() => getDefaultConfig(), []);
-  const result = useMemo(() => checkFeasibility(schedule, staff, config), [schedule, config]);
-  const errors = result.violations.filter(v => v.severity === 'error').length;
-  const warnings = result.violations.length - errors;
-  const setShift = (staffId: string, date: string, shift: ShiftType) => setSchedule(current => ({ ...current, assignments: current.assignments.map(a => a.staffId === staffId && a.date === date ? { ...a, shift } : a) }));
-  const showConflict = () => setSchedule(current => ({ ...current, assignments: current.assignments.map(a => a.staffId === staff[0].id && a.date === dates[0] ? { ...a, shift: 'N' } : a.staffId === staff[0].id && a.date === dates[1] ? { ...a, shift: 'D' } : a) }));
+  const [session, setSession] = useState(0);
+  return <DemoSession key={session} onReset={() => setSession(value => value + 1)} />;
+}
 
-  return <div className="min-h-screen bg-gray-50"><ProductHeader /><main className="mx-auto max-w-7xl space-y-6 px-4 py-8">
-    <div><h1 className="text-2xl font-semibold">샘플 근무표 검증 체험</h1><p className="mt-3 leading-relaxed text-gray-600">가상 직원 8명 · 28일. 각 칸에서 근무를 변경하면 실제 검증 결과가 갱신됩니다. 이 샘플은 자동 생성 결과가 아니며, 기본 설정에서 위반이 있는 교육용 예시입니다.</p><p className="mt-2 text-sm text-gray-600">변경은 저장되거나 서버로 전송되지 않습니다. 새로고침하면 초기화되고 내 근무표는 유지됩니다.</p></div>
-    <div className="flex flex-wrap items-center gap-3"><Button onClick={showConflict}>N→D 위반 예시 만들기</Button><Button variant="outline" onClick={() => setSchedule(createSample())}>샘플 초기화</Button><a className="text-sm text-blue-700 underline" href="/">내 근무표 편집기로 이동</a></div>
-    <p className="text-sm text-gray-600">위반 예시 버튼은 직원 1의 9/7을 N, 9/8을 D로 바꿉니다. D 주간 · E 저녁 · N 야간 · OFF 휴무</p>
-    <div role="status" aria-live="polite" className="rounded-lg border bg-white p-4 text-lg">필수 조건 위반 <strong className="text-red-700">{errors}건</strong> · 선호 조건 경고 <strong className="text-amber-700">{warnings}건</strong></div>
-    <div className="overflow-x-auto rounded-lg border bg-white" tabIndex={0} role="region" aria-label="28일 샘플 근무표, 가로 스크롤 가능">
-      <table className="w-full border-collapse text-sm"><caption className="p-3 text-left text-gray-600">9월 7일–10월 4일 · 가로로 스크롤해 전체 기간을 확인하세요</caption><thead><tr><th scope="col" className="min-w-28 p-3 text-left">직원</th>{dates.map(date => <th key={date} scope="col" className="p-2 font-medium">{format(parseISO(date), 'M/d')}</th>)}</tr></thead><tbody>{staff.map(person => <tr key={person.id} className="border-t"><th scope="row" className="whitespace-nowrap p-3 text-left font-medium">{person.name}</th>{dates.map(date => {
-        const value = schedule.assignments.find(a => a.staffId === person.id && a.date === date)!.shift;
-        return <td key={date} className="p-1"><select aria-label={`${person.name} ${date} 근무`} value={value} onChange={e => setShift(person.id, date, e.target.value as ShiftType)} className={`min-w-16 rounded p-2 ${colors[value]}`}>{shifts.map(shift => <option key={shift} value={shift}>{shift}</option>)}</select></td>;
-      })}</tr>)}</tbody></table>
-    </div>
-    <section aria-label="샘플 검증 결과"><ViolationList violations={result.violations} showAllViolations /></section>
-  </main><Footer /></div>;
+function DemoSession({ onReset }: { onReset: () => void }) {
+  const [sample] = useState(createSample);
+  const state = useSchedule({ sample });
+  const [conflictMessage, setConflictMessage] = useState('');
+  const showConflict = () => {
+    const person = state.staff[0];
+    if (!person) return;
+    // Respect sandbox locks, exclusions and eligibility during the guided action.
+    const first = state.schedule.startDate;
+    const second = format(addDays(parseISO(first), 1), 'yyyy-MM-dd');
+    const assignments = [first, second].map(date => state.schedule.assignments.find(a => a.staffId === person.id && a.date === date));
+    if (assignments.some(a => a?.isLocked) || !['D', 'N'].every(shift => (person.eligibleShifts ?? ['D', 'E', 'N']).includes(shift as 'D' | 'N')) || [first, second].some(date => (state.schedule.cellExclusions?.[`${person.id}-${date}`] ?? []).length > 0)) {
+      setConflictMessage('첫 직원의 처음 두 칸에서 고정·배제를 해제하고 D·N 근무를 허용하거나, 샘플을 초기화한 뒤 다시 체험하세요.');
+      return;
+    }
+    state.updateAssignment(person.id, first, 'N');
+    state.updateAssignment(person.id, second, 'D');
+    state.setShowAllViolations(true);
+    setConflictMessage(`${person.name}의 ${format(parseISO(first), 'M/d')}을 N, ${format(parseISO(second), 'M/d')}을 D로 바꿨습니다. 아래 검증 결과에서 근무 순서 위반을 확인하세요.`);
+  };
+
+  return <div className="min-h-screen bg-gray-50">
+    <Toaster position="top-center" richColors />
+    <ProductHeader />
+    <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
+      <section aria-label="샘플 체험 안내" className="rounded-xl border border-blue-200 bg-white p-4 sm:p-5">
+        <h1 className="text-xl font-semibold">샘플 근무표 체험</h1>
+        <p className="mt-2 text-gray-700">실제 편집기와 같은 화면에서 직원·근무·조건을 바꿔 보세요. 가상 직원 8명의 28일 예시이며 자동 생성 결과가 아닙니다.</p>
+        <p className="mt-2 text-sm text-gray-600">이 체험의 변경은 저장되거나 서버로 전송되지 않습니다. 내 근무표는 그대로 유지됩니다. 로그인·자동 생성·복사·불러오기는 내 근무표 편집기에서 이용하세요.</p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Button onClick={showConflict} disabled={state.staff.length === 0}>N→D 위반 예시 만들기</Button>
+          <Button variant="outline" onClick={onReset}>샘플 초기화</Button>
+          <a className="text-sm text-blue-700 underline" href="/">내 근무표 편집기로 이동</a>
+        </div>
+        {conflictMessage && <p role="status" className="mt-3 text-sm text-blue-800">{conflictMessage}</p>}
+      </section>
+      <ScheduleWorkspace state={state} initialTab="schedule" />
+    </main>
+    <Footer />
+  </div>;
 }

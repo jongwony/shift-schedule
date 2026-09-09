@@ -46,10 +46,14 @@ export function FirstVisitGuide({
           </li>
           <li>
             <span className="mr-2 font-semibold text-blue-700">2</span>
-            근무표 탭에서 날짜별 D·E·N·OFF를 입력하세요.
+            근무표에서 셀을 탭/클릭하면 가능한 D·E·N·OFF가 차례로 바뀝니다.
           </li>
           <li>
             <span className="mr-2 font-semibold text-blue-700">3</span>
+            셀을 0.5초 길게 누르거나 우클릭하면 고정·배제·초기화를 할 수 있습니다. 고정한 근무는 자동 생성에서도 유지됩니다.
+          </li>
+          <li>
+            <span className="mr-2 font-semibold text-blue-700">4</span>
             설정 탭에서 필요한 인원과 휴무 조건을 팀에 맞게 조정하세요.
           </li>
         </ol>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { ShiftType, EligibleShift, Violation } from '@/types';
 import type { ImpactReason } from '@/utils/impactCalculator';
@@ -66,6 +66,7 @@ export function ShiftCell({
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [isPressing, setIsPressing] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const hasError = violations.some((v) => v.severity === 'error');
   const hasWarning = violations.some((v) => v.severity === 'warning');
@@ -90,7 +91,7 @@ export function ShiftCell({
 
   const handleClick = () => {
     if (isLocked) {
-      toast.info('셀이 고정되어 있습니다. 우클릭으로 해제하세요.');
+      toast.info('셀이 고정되어 있습니다. 길게 누르거나 우클릭으로 해제하세요.');
       return;
     }
     if (cycle.length === 0) return;
@@ -102,6 +103,17 @@ export function ShiftCell({
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     setMenuPosition({ x: e.clientX, y: e.clientY });
+    setShowContextMenu(true);
+  };
+
+  const handleContextMenuKey = (e: React.KeyboardEvent) => {
+    if (!((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu')) return;
+
+    e.preventDefault();
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (rect) {
+      setMenuPosition({ x: rect.left, y: rect.bottom });
+    }
     setShowContextMenu(true);
   };
 
@@ -120,9 +132,9 @@ export function ShiftCell({
   // Long press handlers for mobile
   const longPressHandlers = useLongPress({
     onLongPress: () => {
-      // Use last touch position or center of element
-      const element = document.activeElement as HTMLElement;
-      const rect = element?.getBoundingClientRect();
+      // Anchor the menu to this cell, even when focus belongs to another
+      // control in the grid.
+      const rect = buttonRef.current?.getBoundingClientRect();
       if (rect) {
         setMenuPosition({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
       }
@@ -159,8 +171,10 @@ export function ShiftCell({
     <>
       <button
         type="button"
+        ref={buttonRef}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
+        onKeyDown={handleContextMenuKey}
         onFocus={onFocus}
         onBlur={onBlur}
         onMouseEnter={onMouseEnter}
@@ -168,6 +182,8 @@ export function ShiftCell({
         {...longPressHandlers}
         title={title}
         aria-label={ariaLabel}
+        aria-haspopup="menu"
+        aria-expanded={showContextMenu}
         className={cn(
           'relative w-12 h-10 flex items-center justify-center text-sm font-medium rounded border cursor-pointer',
           'transition-all duration-150 ease-in-out',

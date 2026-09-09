@@ -60,16 +60,19 @@ function deepMerge<T>(target: T, source: Partial<T>): T {
  *
  * @param key - localStorage key
  * @param initialValue - Default value if no stored value exists
+ * @param persist - False isolates state from storage reads, writes and other tabs.
+ * Keep this mode fixed for the lifetime of the mounted hook.
  * @returns Tuple of [value, setValue] similar to useState
  */
 export function useLocalStorage<T>(
   key: string,
-  initialValue: T
+  initialValue: T,
+  persist = true
 ): [T, (value: T | ((prev: T) => T)) => void] {
   // Get initial value from localStorage or use provided initial value
   const [storedValue, setStoredValue] = useState<T>(() => {
     // SSR safety check
-    if (typeof window === 'undefined') {
+    if (!persist || typeof window === 'undefined') {
       return initialValue;
     }
 
@@ -92,6 +95,7 @@ export function useLocalStorage<T>(
 
   // Persist to localStorage whenever value changes
   useEffect(() => {
+    if (!persist) return;
     // Skip first render to avoid writing initial value back
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -109,7 +113,7 @@ export function useLocalStorage<T>(
       return;
     }
 
-    if (typeof window === 'undefined') {
+    if (!persist || typeof window === 'undefined') {
       return;
     }
 
@@ -118,11 +122,11 @@ export function useLocalStorage<T>(
     } catch (error) {
       console.warn(`Error setting localStorage key "${key}":`, error);
     }
-  }, [key, storedValue]);
+  }, [key, storedValue, persist]);
 
   // Listen for changes in other tabs
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (!persist || typeof window === 'undefined') {
       return;
     }
 
@@ -139,7 +143,7 @@ export function useLocalStorage<T>(
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [key]);
+  }, [key, persist]);
 
   // Setter function supporting both direct values and functional updates
   const setValue = useCallback((value: T | ((prev: T) => T)) => {

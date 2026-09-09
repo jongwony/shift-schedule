@@ -164,26 +164,31 @@ interface ExportData {
  * - Export/import functionality
  * - Session recovery notification
  */
-export function useSchedule() {
+export function useSchedule(options?: { sample: { staff: Staff[]; schedule: Schedule } }) {
+  const persist = !options?.sample;
   // Initialize before storage hooks read persisted values; migration is idempotent.
-  useState(migrateStorageIfNeeded);
+  useState(() => persist && migrateStorageIfNeeded());
   // Persisted state
-  const [staff, setStaff] = useLocalStorage<Staff[]>(STORAGE_KEYS.staff, []);
+  const [staff, setStaff] = useLocalStorage<Staff[]>(STORAGE_KEYS.staff, options?.sample.staff ?? [], persist);
   const [schedule, setSchedule] = useLocalStorage<Schedule>(
     STORAGE_KEYS.schedule,
-    getDefaultSchedule()
+    options?.sample.schedule ?? getDefaultSchedule(),
+    persist
   );
   const [config, setConfig] = useLocalStorage<ConstraintConfig>(
     STORAGE_KEYS.config,
-    getDefaultConfig()
+    getDefaultConfig(),
+    persist
   );
   const [previousPeriodEnd, setPreviousPeriodEnd] = useLocalStorage<ShiftAssignment[]>(
     STORAGE_KEYS.previousPeriod,
-    []
+    [],
+    persist
   );
   const [requiredNights, setRequiredNights] = useLocalStorage<Record<string, number>>(
     STORAGE_KEYS.requiredNights,
-    {}
+    {},
+    persist
   );
 
   // Generation status for auto-schedule API
@@ -209,7 +214,7 @@ export function useSchedule() {
 
   // Session recovery notification on mount
   useEffect(() => {
-    if (hasShownRecoveryToast.current) {
+    if (!persist || hasShownRecoveryToast.current) {
       return;
     }
 
@@ -221,14 +226,14 @@ export function useSchedule() {
       hasShownRecoveryToast.current = true;
       toast.info('이전 세션이 복구되었습니다.');
     }
-  }, [staff.length, schedule.assignments.length, previousPeriodEnd.length]);
+  }, [staff.length, schedule.assignments.length, previousPeriodEnd.length, persist]);
 
   // Warn before leaving with unsaved changes (beforeunload)
   useEffect(() => {
     const hasData =
       staff.length > 0 || schedule.assignments.length > 0;
 
-    if (!hasData) {
+    if (!persist || !hasData) {
       return;
     }
 
@@ -242,7 +247,7 @@ export function useSchedule() {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [staff.length, schedule.assignments.length]);
+  }, [staff.length, schedule.assignments.length, persist]);
 
   // Derived state: schedule completeness (memoized)
   const scheduleCompleteness = useMemo(() => {
@@ -497,6 +502,7 @@ export function useSchedule() {
   // ==================== Auto-Generation Actions ====================
 
   const generateAutoSchedule = useCallback(async () => {
+    if (!persist) return; // Public samples never call the solver.
     if (!isApiConfigured()) {
       toast.error('API가 설정되지 않았습니다.');
       return;
@@ -602,7 +608,7 @@ export function useSchedule() {
       const message = error instanceof Error ? error.message : '알 수 없는 오류';
       toast.error(`API 오류: ${message}`);
     }
-  }, [staff, schedule.startDate, schedule.assignments, schedule.cellExclusions, config, previousPeriodEnd, requiredNights, setSchedule]);
+  }, [persist, staff, schedule.startDate, schedule.assignments, schedule.cellExclusions, config, previousPeriodEnd, requiredNights, setSchedule]);
 
   // ==================== Export/Import Actions ====================
 

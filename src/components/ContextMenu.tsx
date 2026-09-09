@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface Position {
@@ -56,9 +56,27 @@ function calculateInitialPosition(position: Position): { top: number; left: numb
  */
 export function ContextMenu({ position, onClose, children }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   // Calculate initial position synchronously (no ref access during render)
   const initialPosition = calculateInitialPosition(position);
+
+  useLayoutEffect(() => {
+    const menu = menuRef.current;
+    if (!menu) return;
+    // Exclusion controls make this menu taller than the initial estimate.
+    const rect = menu.getBoundingClientRect();
+    menu.style.left = `${Math.max(10, Math.min(position.x, window.innerWidth - rect.width - 10))}px`;
+    menu.style.top = `${Math.max(10, Math.min(position.y, window.innerHeight - rect.height - 10))}px`;
+  }, [position.x, position.y]);
+
+  useEffect(() => {
+    // StrictMode replays effects; do not replace the trigger with our own item.
+    if (!menuRef.current?.contains(document.activeElement)) {
+      previousFocusRef.current = document.activeElement as HTMLElement | null;
+    }
+    menuRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+  }, []);
 
   // Close on outside click
   useEffect(() => {
@@ -71,7 +89,9 @@ export function ContextMenu({ position, onClose, children }: ContextMenuProps) {
     // Close on Escape key
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.preventDefault();
         onClose();
+        previousFocusRef.current?.focus();
       }
     };
 
@@ -94,9 +114,18 @@ export function ContextMenu({ position, onClose, children }: ContextMenuProps) {
     <div
       ref={menuRef}
       role="menu"
+      onKeyDown={(event) => {
+        if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+        const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
+        if (!buttons.length) return;
+        event.preventDefault();
+        const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
+        buttons[next].focus();
+      }}
       className={cn(
         'fixed z-50 min-w-[140px] rounded-md border border-gray-200 bg-white shadow-lg',
-        'py-1 animate-in fade-in-0 zoom-in-95 duration-100'
+        'py-1 max-h-[calc(100dvh-20px)] overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-100'
       )}
       style={{
         top: initialPosition.top,
